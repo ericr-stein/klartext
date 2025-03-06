@@ -7,6 +7,24 @@ Production code and quality evaluations for the **Language Simplification App of
 - `pip install git+https://github.com/machinelearningZH/zix_understandability-index`
 - Install the required Spacy language model: `python -m spacy download de_core_news_sm`
 
+## Setup Logging
+- Configure Prometheus to scrape the metrics endpoint at port 8000
+- Set up Grafana to use Prometheus as a data source
+- Create a dashboard with panels for:
+  - Request counts by operation/model
+  - Processing times
+  - Text complexity before/after
+  - Input/output word counts
+
+  Prometheus configuration example:
+  ```
+  scrape_configs:
+  - job_name: 'simplify-language'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:8000']
+  ```
+
 ## Observations from Log Data
 
 The following observations were derived from the log data of the prototype app, which has been operational since **December 14, 2023**. The following analysis covers all interactions until 25th of January 2025.
