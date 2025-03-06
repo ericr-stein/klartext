@@ -84,7 +84,7 @@ TEXT_AREA_HEIGHT = 600
 MAX_CHARS_INPUT = 10_000
 
 
-USER_WARNING = """Mit dieser App kannst du Texte vereinfachen. Dazu schicken wir deinen Text an ein Sprachmodell (LLM), das wir im Kanton betreiben. Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 31.01.2025."""
+USER_WARNING = """Mit dieser App kannst du Texte vereinfachen. Dazu schicken wir deinen Text an ein Sprachmodell (LLM), das wir im Kanton betreiben. Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 6.3.2025."""
 
 
 # Constants for the formatting of the Word document that can be downloaded.
@@ -329,8 +329,8 @@ def log_event(
 ):
     """Log event."""
     log_string = f"{datetime.now().strftime(DATETIME_FORMAT)}"
-    log_string += f"\t{len(text.split())}"
-    log_string += f"\t{len(response.split())}"
+    log_string += f"\t{len(text.split())}" # Number of words in the input text.
+    log_string += f"\t{len(response.split())}" # Number of words in the output text.
     log_string += f"\t{do_analysis}"
     log_string += f"\t{do_simplification}"
     log_string += f"\t{simplification_level}"
