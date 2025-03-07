@@ -12,14 +12,8 @@ import base64
 from docx import Document
 from docx.shared import Pt, Inches
 import io
-
 import logging
-
-logging.basicConfig(
-    filename="app.log",
-    datefmt="%d-%b-%y %H:%M:%S",
-    level=logging.WARNING,
-)
+import threading
 
 import numpy as np
 from zix.understandability import get_zix, get_cefr
@@ -54,11 +48,89 @@ OPENAI_TEMPLATES = [
 ]
 
 # ---------------------------------------------------------------
+# Logging with Graphana and Prometheus
+
+from prometheus_client import Counter, Histogram, Gauge, start_http_server
+from streamlit_extras.prometheus import streamlit_registry
+
+
+@st.cache_resource
+def get_metrics():
+    """Get metrics from Prometheus."""
+
+    registry = streamlit_registry()
+
+    # Configure standard logging for errors
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger("simplify-language")
+
+    # Define metrics with unique prefix and connect to our registry
+    REQUEST_COUNT = Counter(
+        "simplify_app_requests_total",
+        "Total number of requests",
+        ["operation", "simplification_level", "model", "success"],
+        registry=registry,
+    )
+    PROCESSING_TIME = Histogram(
+        "simplify_app_processing_seconds",
+        "Time spent processing requests",
+        ["operation", "simplification_level", "model"],
+        buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0),
+        registry=registry,
+    )
+    INPUT_WORD_COUNT = Histogram(
+        "simplify_app_input_word_count",
+        "Number of words in input text",
+        buckets=(10, 50, 100, 200, 500, 1000, 2000, 5000),
+        registry=registry,
+    )
+    OUTPUT_WORD_COUNT = Histogram(
+        "simplify_app_output_word_count",
+        "Number of words in output text",
+        buckets=(10, 50, 100, 200, 500, 1000, 2000, 5000),
+        registry=registry,
+    )
+    TEXT_COMPLEXITY_SCORE = Gauge(
+        "simplify_app_text_complexity_score",
+        "Text complexity score before and after processing",
+        ["stage"],  # 'input' or 'output'
+        registry=registry,
+    )
+    ACTIVE_USERS = Gauge(
+        "simplify_app_active_users", "Number of active users", registry=registry
+    )
+    return (
+        REQUEST_COUNT,
+        PROCESSING_TIME,
+        INPUT_WORD_COUNT,
+        OUTPUT_WORD_COUNT,
+        TEXT_COMPLEXITY_SCORE,
+        ACTIVE_USERS,
+        logger,
+    )
+
+
+(
+    REQUEST_COUNT,
+    PROCESSING_TIME,
+    INPUT_WORD_COUNT,
+    OUTPUT_WORD_COUNT,
+    TEXT_COMPLEXITY_SCORE,
+    ACTIVE_USERS,
+    logger,
+) = get_metrics()
+
+
+# ---------------------------------------------------------------
 # Constants
 
 
 # Llama.cpp parameters.
 MODEL_PATHS = {
+    "Llama 3.1 1B": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
     "Llama 3.1 Nemotron": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
     "Llama 3.1 «Sauerkraut»": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
     "Gemma 2": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
@@ -327,18 +399,44 @@ def log_event(
     time_processed,
     success,
 ):
-    """Log event."""
-    log_string = f"{datetime.now().strftime(DATETIME_FORMAT)}"
-    log_string += f"\t{len(text.split())}" # Number of words in the input text.
-    log_string += f"\t{len(response.split())}" # Number of words in the output text.
-    log_string += f"\t{do_analysis}"
-    log_string += f"\t{do_simplification}"
-    log_string += f"\t{simplification_level}"
-    log_string += f"\t{model_choice}"
-    log_string += f"\t{time_processed:.3f}"
-    log_string += f"\t{success}"
+    """Log metrics to Prometheus."""
+    operation = "analysis" if do_analysis else "simplification"
 
-    logging.warning(log_string)
+    try:
+        # Count the request
+        REQUEST_COUNT.labels(
+            operation=operation,
+            simplification_level=simplification_level,
+            model=model_choice,
+            success=str(success),
+        ).inc()
+
+        # Record processing time
+        PROCESSING_TIME.labels(
+            operation=operation,
+            simplification_level=simplification_level,
+            model=model_choice,
+        ).observe(time_processed)
+
+        # Record text length metrics
+        input_word_count = len(text.split())
+        output_word_count = (
+            len(response.split()) if success and isinstance(response, str) else 0
+        )
+
+        INPUT_WORD_COUNT.observe(input_word_count)
+        if success and output_word_count > 0:
+            OUTPUT_WORD_COUNT.observe(output_word_count)
+
+        # Standard logging for backup/debugging
+        logger.info(
+            f"Operation: {operation}, Model: {model_choice}, Level: {simplification_level}, "
+            f"Success: {success}, Time: {time_processed:.3f}s, "
+            f"Words: {input_word_count}->{output_word_count}"
+        )
+    except Exception as e:
+        # Ensure logging errors don't crash the application
+        logger.error(f"Error logging metrics: {e}")
 
 
 # ---------------------------------------------------------------
@@ -444,6 +542,7 @@ if do_simplification or do_analysis:
         st.stop()
 
     score_source = get_zix(st.session_state.key_textinput)
+    TEXT_COMPLEXITY_SCORE.labels(stage="input").set(score_source)
     # We add 0 to avoid negative zero.
     score_source_rounded = int(np.round(score_source, 0) + 0)
     cefr_source = get_cefr(score_source)
@@ -512,6 +611,7 @@ if do_simplification or do_analysis:
         )
         if do_simplification:
             score_target = get_zix(response)
+            TEXT_COMPLEXITY_SCORE.labels(stage="output").set(score_target)
             score_target_rounded = int(np.round(score_target, 0) + 0)
             cefr_target = get_cefr(score_target)
             if score_target < LIMIT_HARD:

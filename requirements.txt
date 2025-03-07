@@ -16,3 +16,4 @@ tiktoken
 llama-cpp-python
 
 streamlit
+streamlit-extras
