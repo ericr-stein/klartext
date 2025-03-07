@@ -606,7 +606,6 @@ if do_simplification or do_analysis:
     # Often the models return the German letter ß as ss. Replace it.
     response = response.replace("ß", "ss")
     time_processed = time.time() - start_time
-    response = SAMPLE_TEXT_01
     with placeholder_result.container():
         st.text_area(
             text,
