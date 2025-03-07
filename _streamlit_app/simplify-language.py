@@ -50,8 +50,12 @@ OPENAI_TEMPLATES = [
 # ---------------------------------------------------------------
 # Logging with Graphana and Prometheus
 
-from prometheus_client import Counter, Histogram, Gauge, start_http_server
+from prometheus_client import Counter, Histogram, Gauge
+
 from streamlit_extras.prometheus import streamlit_registry
+# https://arnaudmiribel.github.io/streamlit-extras/extras/prometheus/
+# To produce accurate metrics, we need to ensure that unique metric objects are shared across app runs and sessions. Either 1) initialize metrics in a separate file and import them in the main app script, or 2) initialize metrics in a cached function (and ensure the cache is not cleared during execution).
+# For an app running locally we can view the output with curl localhost:8501/_stcore/metrics or equivalent.
 
 
 @st.cache_resource
@@ -602,7 +606,7 @@ if do_simplification or do_analysis:
     # Often the models return the German letter ß as ss. Replace it.
     response = response.replace("ß", "ss")
     time_processed = time.time() - start_time
-
+    response = SAMPLE_TEXT_01
     with placeholder_result.container():
         st.text_area(
             text,
