@@ -13,7 +13,6 @@ from docx import Document
 from docx.shared import Pt, Inches
 import io
 import logging
-import threading
 
 import numpy as np
 from zix.understandability import get_zix, get_cefr
@@ -29,7 +28,6 @@ from utils_prompts import (
     RULES_ES,
     RULES_LS,
     REWRITE_COMPLETE,
-    REWRITE_CONDENSED,
     OPENAI_TEMPLATE_EASIER,
     OPENAI_TEMPLATE_ES,
     OPENAI_TEMPLATE_LS,
@@ -134,7 +132,7 @@ def get_metrics():
 
 # Llama.cpp parameters.
 MODEL_PATHS = {
-    "Llama 3.1 1B": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
+    "Llama 3.1 3B": "_models/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
     "Llama 3.1 Nemotron": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
     "Llama 3.1 «Sauerkraut»": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
     "Gemma 2": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
@@ -245,9 +243,6 @@ def create_prompt(
 ):
     """Create prompt and system message according the app settings."""
     completeness = REWRITE_COMPLETE
-    # if condense_text:
-    #     completeness = REWRITE_CONDENSED
-
     if simplification_level == "Verständlichere Sprache":
         final_prompt = prompt_easy.format(
             completeness=completeness, rules=RULES_EASIER, prompt=text
@@ -279,7 +274,7 @@ def call_llm(
     model_id=MODEL_PATHS["Llama 3.1 Nemotron"],
     analysis=False,
 ):
-    """Invoke OpenAI model."""
+    """Invoke LLM."""
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
     try:
         message = llm.create_chat_completion(
