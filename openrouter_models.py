@@ -1,0 +1,57 @@
+FREE_MODELS_SELECTED = {
+    # "DEEP_SEEK_R1_ZERO": "deepseek/deepseek-r1-zero:free",
+    # "DEEP_SEEK_V3": "deepseek/deepseek-chat:free",
+    # "DEEP_SEEK_R1": "deepseek/deepseek-r1:free",
+    # "DEEP_SEEK_R1_DISTILL_LLAMA_70B": "deepseek/deepseek-r1-distill-llama-70b:free",
+    # "DEEP_SEEK_R1_DISTILL_QWEN_14B": "deepseek/deepseek-r1-distill-qwen-14b:free",
+    # "DEEP_SEEK_R1_DISTILL_QWEN_32B": "deepseek/deepseek-r1-distill-qwen-32b:free",
+    # "DOLPHIN_3_MISTRAL_24B": "cognitivecomputations/dolphin3.0-mistral-24b:free",
+    # "DOLPHIN_3_R1_MISTRAL_24B": "cognitivecomputations/dolphin3.0-r1-mistral-24b:free",
+    # "GOOGLE_GEMMA_3_4B_IT": "google/gemma-3-4b-it:free",
+    # "GOOGLE_GEMMA_3_12B_IT": "google/gemma-3-12b-it:free",
+    "GOOGLE_GEMMA_3_27B_IT": "google/gemma-3-27b-it:free",
+    # "QWEN_2_5_72B_INSTRUCT": "qwen/qwen-2.5-72b-instruct:free",
+    "QWEN_QWQ_32B": "qwen/qwq-32b:free",
+    # "QWEN_QWQ_32B_PREVIEW": "qwen/qwq-32b-preview:free",
+}
+
+
+FREE_MODELS_OSS = {
+    "DEEP_SEEK_R1_ZERO": "deepseek/deepseek-r1-zero:free",
+    "DEEP_SEEK_V3": "deepseek/deepseek-chat:free",
+    "DEEP_SEEK_R1": "deepseek/deepseek-r1:free",
+    "DEEP_SEEK_R1_DISTILL_LLAMA_70B": "deepseek/deepseek-r1-distill-llama-70b:free",
+    "DEEP_SEEK_R1_DISTILL_QWEN_14B": "deepseek/deepseek-r1-distill-qwen-14b:free",
+    "DEEP_SEEK_R1_DISTILL_QWEN_32B": "deepseek/deepseek-r1-distill-qwen-32b:free",
+    "DOLPHIN_3_MISTRAL_24B": "cognitivecomputations/dolphin3.0-mistral-24b:free",
+    "DOLPHIN_3_R1_MISTRAL_24B": "cognitivecomputations/dolphin3.0-r1-mistral-24b:free",
+    "GOOGLE_GEMMA_2_9B_IT": "google/gemma-2-9b-it:free",
+    "GOOGLE_GEMMA_3_4B_IT": "google/gemma-3-4b-it:free",
+    "GOOGLE_GEMMA_3_12B_IT": "google/gemma-3-12b-it:free",
+    "GOOGLE_GEMMA_3_27B_IT": "google/gemma-3-27b-it:free",
+    "HUGGING_FACE_ZEPHYR_7B_BETA": "huggingfaceh4/zephyr-7b-beta:free",
+    "META_LLAMA_3_1_8B_INSTRUCT": "meta-llama/llama-3.1-8b-instruct:free",
+    "META_LLAMA_3_3_70B_INSTRUCT": "meta-llama/llama-3.3-70b-instruct:free",
+    "MICROSOFT_PHI_3_MEDIUM_128K_INSTRUCT": "microsoft/phi-3-medium-128k-instruct:free",
+    "MICROSOFT_PHI_3_MINI_128K_INSTRUCT": "microsoft/phi-3-mini-128k-instruct:free",
+    "MISTRAL_7B_INSTRUCT": "mistralai/mistral-7b-instruct:free",
+    "MISTRAL_NEMO": "mistralai/mistral-nemo:free",
+    "MISTRAL_SMALL_24B_INSTRUCT_2501": "mistralai/mistral-small-24b-instruct-2501:free",
+    "NVIDIA_LLAMA_3_1_NEMOTRON_70B_INSTRUCT": "nvidia/llama-3.1-nemotron-70b-instruct:free",
+    "NOUS_DEEPHERMES_3_LLAMA_3_8B_PREVIEW": "nousresearch/deephermes-3-llama-3-8b-preview:free",
+    "QWEN_2_7B_INSTRUCT": "qwen/qwen-2-7b-instruct:free",
+    "QWEN_2_5_72B_INSTRUCT": "qwen/qwen-2.5-72b-instruct:free",
+    "QWEN_QWQ_32B": "qwen/qwq-32b:free",
+    "QWEN_QWQ_32B_PREVIEW": "qwen/qwq-32b-preview:free",
+    "QWEN_2_5_VL_72B_INSTRUCT": "qwen/qwen2.5-vl-72b-instruct:free",
+}
+
+
+FREE_MODELS_COMMERCIAL = {
+    "GOOGLE_GEMINI_2_FLASH_THINKING_EXP_1219": "google/gemini-2.0-flash-thinking-exp-1219:free",
+    "GOOGLE_GEMINI_2_FLASH_THINKING_EXP_0121": "google/gemini-2.0-flash-thinking-exp:free",
+    "GOOGLE_GEMINI_EXP_1206": "google/gemini-exp-1206:free",
+    "GOOGLE_GEMINI_2_FLASH_EXP": "google/gemini-2.0-flash-exp:free",
+    "GOOGLE_GEMINI_2_FLASH_LITE_PREVIEW_02_05": "google/gemini-2.0-flash-lite-preview-02-05:free",
+    "GOOGLE_GEMINI_2_PRO_EXP_02_05": "google/gemini-2.0-pro-exp-02-05:free",
+}
