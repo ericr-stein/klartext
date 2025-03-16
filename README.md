@@ -3,11 +3,13 @@
 Production code and quality evaluations for the **Language Simplification App of the Cantonal Administration**.
 
 ## Installation
+
 - `pip install -r requirements.txt`
 - `pip install git+https://github.com/machinelearningZH/zix_understandability-index`
 - Install the required Spacy language model: `python -m spacy download de_core_news_sm`
 
 ## Setup Logging
+
 - Configure Prometheus to scrape the metrics endpoint at port 8000
 - Set up Grafana to use Prometheus as a data source
 - Create a dashboard with panels for:
@@ -17,6 +19,7 @@ Production code and quality evaluations for the **Language Simplification App of
   - Input/output word counts
 
   Prometheus configuration example:
+
   ```
   scrape_configs:
   - job_name: 'simplify-language'
@@ -99,11 +102,16 @@ The candidates under consideration are these:
 - [Llama 3.2 3B](https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF)
 - [Llama 3.3 70B (Q5_K_M)](https://huggingface.co/bartowski/Llama-3.3-70B-Instruct-GGUF)
 - [Gemma 2 27B (Q5_K_M)](https://huggingface.co/bartowski/gemma-2-27b-it-GGUF)
+- [Gemma 3 27B (Q5_K_M and Q6_k)](https://huggingface.co/unsloth/gemma-3-27b-it-GGUF)
 - [Qwen 2.5 32B (Q5_K-M)](https://huggingface.co/bartowski/Qwen2.5-32B-Instruct-GGUF)
 - [Qwen 2.5 72B (Q5_K-M)](https://huggingface.co/bartowski/EVA-Qwen2.5-72B-v0.2-GGUF)
-- [Deepseek R1 Distill Llama 8B (Q5_K-M)](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF)
-- [Deepseek R1 Distill Llama 8B (Q4_K-M)](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Llama-70B-GGUF)
 - [Mistral Small v3 24B](https://huggingface.co/mistralai/Mistral-Small-24B-Instruct-2501)
+
+Reasoning models
+
+- [QwQ 32B (Q5_K-M)](https://huggingface.co/unsloth/QwQ-32B-GGUF)
+- [Deepseek R1 Distill Llama 8B (Q5_K-M)](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF)
+- [Deepseek R1 Distill Llama 70B (Q4_K-M)](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Llama-70B-GGUF)
 
 **Quantization Considerations:** The **degree of quantization** has to be discussed too. **Q4 and Q5** appears to offer an optimal balance between performance and resource efficiency.
 
@@ -126,6 +134,7 @@ While we may explore **finetuning** in the future, our current focus is on **ide
 - **Llama 3.1 Nemotron 70B (Q5_K_M)**
 - **Llama 3.1 SauerkrautLM 70B (Q5_K_M)**
 - **Gemma 2 27B (Q5_K_M)**
+- **Gemma 3 27B (Q6_k)**
 - **Phi-4 Unsloth 14B (Q5_K_M)**
 
 **Llama 3.3 70B (Q5_K_M) yields the best results for Leichte Sprache.**
