@@ -218,15 +218,15 @@ def call_llm(
     try:
         ollama_client = get_ollama_client()
         
-        # Format the request for Ollama API
+        # Format system and user message in a way compatible with Ollama API
+        formatted_prompt = f"<s>[INST] <<SYS>>\n{system}\n<</SYS>>\n\n{final_prompt}[/INST]</s>"
+        
+        # Format the request for Ollama API - using the structure Ollama expects
         payload = {
             "model": model_name,
-            "prompt": final_prompt,
-            "system": system,
-            "options": {
-                "temperature": TEMPERATURE,
-                "num_predict": MAX_TOKENS,
-            },
+            "prompt": formatted_prompt,
+            "temperature": TEMPERATURE,
+            "num_predict": MAX_TOKENS,
             "stream": False
         }
         
