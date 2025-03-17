@@ -21,6 +21,18 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.simplify-local.rule=Host(`localhost`)"
+      - "traefik.http.routers.simplify-local.entrypoints=websecure"
+      - "traefik.http.routers.simplify-local.tls=true"
+      - "traefik.http.services.simplify-local.loadbalancer.server.port=8501"
+      - "traefik.http.routers.metrics-local.rule=Host(`localhost`) && PathPrefix(`/metrics`)"
+      - "traefik.http.routers.metrics-local.entrypoints=websecure"
+      - "traefik.http.routers.metrics-local.tls=true"
+      - "traefik.http.services.metrics-local.loadbalancer.server.port=8000"
+    networks:
+      - traefik_network_local
   
   prometheus:
     image: prom/prometheus:latest
@@ -40,6 +52,16 @@ services:
     depends_on:
       simplify-app:
         condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus-local.rule=Host(`localhost`) && PathPrefix(`/prometheus`)"
+      - "traefik.http.routers.prometheus-local.entrypoints=websecure"
+      - "traefik.http.routers.prometheus-local.tls=true"
+      - "traefik.http.services.prometheus-local.loadbalancer.server.port=9090"
+      - "traefik.http.middlewares.prometheus-strip-local.stripprefix.prefixes=/prometheus"
+      - "traefik.http.routers.prometheus-local.middlewares=prometheus-strip-local"
+    networks:
+      - traefik_network_local
     
   grafana:
     image: grafana/grafana:latest
@@ -47,6 +69,8 @@ services:
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SERVER_ROOT_URL=https://localhost/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - grafana-data-local:/var/lib/grafana
@@ -55,7 +79,47 @@ services:
     restart: unless-stopped
     depends_on:
       - prometheus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana-local.rule=Host(`localhost`) && PathPrefix(`/grafana`)"
+      - "traefik.http.routers.grafana-local.entrypoints=websecure"
+      - "traefik.http.routers.grafana-local.tls=true"
+      - "traefik.http.services.grafana-local.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.grafana-strip-local.stripprefix.prefixes=/grafana"
+      - "traefik.http.routers.grafana-local.middlewares=grafana-strip-local"
+    networks:
+      - traefik_network_local
+
+  traefik:
+    image: traefik:v2.10
+    container_name: simplify-traefik-local
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=admin@example.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-data-local:/letsencrypt
+    networks:
+      - traefik_network_local
+    restart: unless-stopped
 
 volumes:
   prometheus-data-local:
   grafana-data-local:
+  traefik-data-local:
+
+networks:
+  traefik_network_local:
+    name: traefik_network_local
