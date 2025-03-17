@@ -60,10 +60,14 @@ OPENAI_TEMPLATES = [
 # ---------------------------------------------------------------
 # Constants
 
+# Model options mapping display names to full model identifiers
+MODEL_OPTIONS = {
+    "gemma3:q6": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
+    "gemma3:q8": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q8_0"
+}
 
-# Model name - fixed to use Gemma 3
-MODEL_NAME = "gemma3:27b" #afi server
-#MODEL_NAME = "gemma3:latest" #development
+# Default model to use if none is selected
+MODEL_NAME = MODEL_OPTIONS["gemma3:q6"]  # Default to Q6 model
 
 # Get Ollama host from environment variable or use default
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
@@ -438,9 +442,16 @@ with button_cols[2]:
     # )
 
 with button_cols[3]:
-    # Model is fixed to Gemma 3
-    st.markdown("**Modell: Gemma 3**")
-    model_choice = "Gemma 3" # Define model_choice for later use
+    # Model selection
+    selected_model_key = st.radio(
+        "Modell:",
+        options=list(MODEL_OPTIONS.keys()),
+        index=0,  # Default to Q6 model
+    )
+    # Get the actual model name for API calls
+    MODEL_NAME = MODEL_OPTIONS[selected_model_key]
+    # Store friendly name for display/logging
+    model_choice = selected_model_key
 
 # Instantiate empty containers for the text areas.
 cols = st.columns([2, 2, 1])
