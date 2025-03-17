@@ -62,8 +62,8 @@ OPENAI_TEMPLATES = [
 
 
 # Model name - fixed to use Gemma 3
-#MODEL_NAME = "unsloth/gemma-3-27b-it-GGUF:Q8_0" #afi server
-MODEL_NAME = "gemma3:latest" #development
+MODEL_NAME = "unsloth/gemma-3-27b-it-GGUF:Q8_0" #afi server
+#MODEL_NAME = "gemma3:latest" #development
 
 # Get Ollama host from environment variable or use default
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
