@@ -260,7 +260,13 @@ def get_result_from_response(response):
     else:
         tag = "leichtesprache"
     result = re.findall(rf"<{tag}>(.*?)</{tag}>", response, re.DOTALL)
-    return "\n".join(result).strip()
+    
+    # If tags are found, use that content
+    if result:
+        return "\n".join(result).strip()
+    
+    # If no tags found, return the full response (fallback)
+    return response.strip()
 
 
 def strip_markdown(text):
@@ -545,10 +551,24 @@ if do_simplification or do_analysis:
             value=response,
         )
         if do_simplification:
-            score_target = get_zix(response)
-            score_target_rounded = int(np.round(score_target, 0) + 0)
-            cefr_target = get_cefr(score_target)
-            if score_target < LIMIT_HARD:
+            # Check if we have content to analyze
+            if response.strip():
+                # Get ZIX score and handle None values
+                score_target = get_zix(response)
+                # Only proceed with calculations if we got a valid score
+                if score_target is not None:
+                    score_target_rounded = int(np.round(score_target, 0) + 0)
+                    cefr_target = get_cefr(score_target)
+                else:
+                    # Handle case where ZIX scoring returns None
+                    score_target_rounded = 0
+                    cefr_target = "?"
+            else:
+                # Handle empty response case
+                score_target_rounded = 0
+                cefr_target = "?"
+                
+            if score_target is None or score_target < LIMIT_HARD:
                 st.markdown(
                     f"Dein vereinfachter Text ist **:red[schwer verständlich]**. (Wert: {score_target_rounded}). Das entspricht etwa dem **:red[Sprachniveau {cefr_target}]**."
                 )
@@ -561,10 +581,16 @@ if do_simplification or do_analysis:
                     f"Dein vereinfachter Text ist **:green[gut verständlich]**. (Wert: {score_target_rounded}). Das entspricht etwa dem **:green[Sprachniveau {cefr_target}]**."
                 )
             with placeholder_analysis.container():
+                # Calculate delta safely only if score_target is valid
+                if score_target is not None:
+                    delta = int(np.round(score_target - score_source, 0))
+                else:
+                    delta = None
+                
                 text_analysis = st.metric(
                     label="Verständlichkeit",
                     value=score_target_rounded,
-                    delta=int(np.round(score_target - score_source, 0)),
+                    delta=delta,
                     help="Verständlichkeit auf einer Skala von -10 bis 10 (von -10 = extrem schwer verständlich bis 10 = sehr gut verständlich). Texte in Einfacher Sprache haben meist einen Wert von 0 bis 4 oder höher.",
                 )
 
