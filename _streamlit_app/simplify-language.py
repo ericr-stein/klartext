@@ -252,21 +252,29 @@ def call_llm(
 
 
 def get_result_from_response(response):
-    """Extract text between tags from response."""
+    """Extract text between tags from response or add tags if not present."""
+    # Determine the expected tag based on simplification level
     if simplification_level == "Verständlichere Sprache":
         tag = "verständlichesprache"
     elif simplification_level == "Einfache Sprache":
         tag = "einfachesprache"
     else:
         tag = "leichtesprache"
-    result = re.findall(rf"<{tag}>(.*?)</{tag}>", response, re.DOTALL)
     
-    # If tags are found, use that content
-    if result:
+    # Check if tags are already present
+    tag_pattern = rf"<{tag}>.*?</{tag}>"
+    has_tags = re.search(tag_pattern, response, re.DOTALL) is not None
+    
+    if has_tags:
+        # Tags exist, extract content as before
+        result = re.findall(rf"<{tag}>(.*?)</{tag}>", response, re.DOTALL)
         return "\n".join(result).strip()
-    
-    # If no tags found, return the full response (fallback)
-    return response.strip()
+    else:
+        # No tags found, wrap the response with appropriate tags and then extract again
+        # This ensures we get just the content without the tags
+        wrapped_response = f"<{tag}>{response.strip()}</{tag}>"
+        result = re.findall(rf"<{tag}>(.*?)</{tag}>", wrapped_response, re.DOTALL)
+        return "\n".join(result).strip()
 
 
 def strip_markdown(text):
