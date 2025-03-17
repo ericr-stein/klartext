@@ -15,9 +15,9 @@ services:
       - "traefik.http.routers.simplify.entrypoints=websecure"
       - "traefik.http.routers.simplify.tls=true"
       - "traefik.http.services.simplify.loadbalancer.server.port=8501"
-      - "traefik.http.routers.metrics.rule=Host(`sp000201-t3.kt.ktzh.ch`) && PathPrefix(`/metrics`)"
-      - "traefik.http.routers.metrics.entrypoints=websecure"
-      - "traefik.http.routers.metrics.tls=true"
+      #- "traefik.http.routers.metrics.rule=Host(`sp000201-t3.kt.ktzh.ch`) && PathPrefix(`/metrics`)"
+      #- "traefik.http.routers.metrics.entrypoints=websecure"
+      #- "traefik.http.routers.metrics.tls=true"
       - "traefik.http.services.metrics.loadbalancer.server.port=8000"
     networks:
       - traefik_network
