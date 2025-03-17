@@ -1,0 +1,8 @@
+streamlit
+numpy
+python-docx
+requests
+spacy
+pandas
+pyarrow  # for parquet files
+prometheus_client  # for monitoring metrics
