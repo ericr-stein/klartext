@@ -1,4 +1,4 @@
-# KlartextZH – Language Simplification App KTZH
+# KlartextZH – Language Simplification App
 
 Production code and quality evaluations for KlartextZH, the **Language Simplification App of the Cantonal Administration**.
 
