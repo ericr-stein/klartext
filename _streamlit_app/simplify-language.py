@@ -62,18 +62,25 @@ OPENAI_TEMPLATES = [
 
 # Model options mapping display names to full model identifiers
 MODEL_OPTIONS = {
-    "gemma3:q6": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
-    "gemma3:q8": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q8_0"
+    "Gemma 3": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
+    "Gemma 2": "hf.co/unsloth/gemma-2-27b-GGUF:Q5_K_M",
+    "Phi-4": "hf.co/microsoft/phi-4-GGUF:Q5_K_M",
+    "Llama Nemotron": "hf.co/mistralai/Llama-3.1-Nemotron-70B-GGUF:Q5_K_M",
+    "Llama Sauerkraut": "hf.co/LeoLM/Llama-3.1-Sauerkraut-70B-GGUF:Q5_K_M",
+    "Llama 3.3": "hf.co/meta-llama/Llama-3.3-70B-GGUF:Q5_K_M"
+}
+
+# Model-specific temperature settings
+MODEL_TEMPERATURES = {
+    "Gemma 3": 1.0,
+    "default": 0.5  # Used for all other models
 }
 
 # Default model to use if none is selected
-MODEL_NAME = MODEL_OPTIONS["gemma3:q6"]  # Default to Q6 model
+MODEL_NAME = MODEL_OPTIONS["Gemma 3"]  # Default to Gemma 3
 
 # Get Ollama host from environment variable or use default
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
-
-# From our testing we derive a sensible temperature of 0.5 as a good trade-off between creativity and coherence.
-TEMPERATURE = 0.5
 MAX_TOKENS = 8192
 
 # Height of the text areas for input and output.
@@ -122,7 +129,7 @@ def get_ollama_client(base_url=OLLAMA_HOST):
     try:
         response = requests.get(f"{base_url}/api/version")
         response.raise_for_status()
-        st.success(f"Verbunden mit AFI AI Server (Version: {response.json().get('version')})")
+        # Success message removed as requested
     except Exception as e:
         st.error(f"Verbindung zum AFI AI Server fehlgeschlagen: {str(e)}")
     
@@ -222,6 +229,12 @@ def call_llm(
     try:
         ollama_client = get_ollama_client()
         
+        # Get the display name of the model from the model_name
+        model_display_name = next((k for k, v in MODEL_OPTIONS.items() if v == model_name), None)
+        
+        # Determine temperature based on model
+        temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
+        
         # Format system and user message in a way compatible with Ollama API
         formatted_prompt = f"<s>[INST] <<SYS>>\n{system}\n<</SYS>>\n\n{final_prompt}[/INST]</s>"
         
@@ -229,7 +242,7 @@ def call_llm(
         payload = {
             "model": model_name,
             "prompt": formatted_prompt,
-            "temperature": TEMPERATURE,
+            "temperature": temp,
             "num_predict": MAX_TOKENS,
             "stream": False
         }
@@ -274,6 +287,13 @@ def get_result_from_response(response):
     
     # Strip ALL remaining tags from the content
     clean_content = re.sub(r'<[^>]+>', '', content)
+    
+    # Enhanced cleaning: normalize whitespace
+    # Replace multiple spaces with a single space
+    clean_content = re.sub(r'\s+', ' ', clean_content)
+    # Remove leading/trailing whitespace
+    clean_content = clean_content.strip()
+    
     return clean_content
 
 
