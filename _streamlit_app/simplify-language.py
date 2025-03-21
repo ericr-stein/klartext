@@ -66,7 +66,6 @@ MODEL_OPTIONS = {
     "Gemma 2": "gemma2:27b-instruct-q5_K_M",
     "Phi-4": "vanilj/phi-4-unsloth:Q5_K_M",
     "Llama Nemotron": "nemotron:70b-instruct-q5_K_M",
-    "Llama Sauerkraut": "hf.co/TheBloke/SauerkrautLM-70B-v1-GGUF:Q5_K_M",
     "Llama 3.3": "llama3.3:latest"
 }
 
@@ -77,7 +76,7 @@ MODEL_TEMPERATURES = {
 }
 
 # Default model to use if none is selected
-MODEL_NAME = MODEL_OPTIONS["Gemma 3"]  # Default to Gemma 3
+MODEL_NAME = MODEL_OPTIONS["Llama Nemotron"]  # Default to Llama Nemotron
 
 # Get Ollama host from environment variable or use default
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
@@ -288,9 +287,9 @@ def get_result_from_response(response):
     # Strip ALL remaining tags from the content
     clean_content = re.sub(r'<[^>]+>', '', content)
     
-    # Enhanced cleaning: normalize whitespace
-    # Replace multiple spaces with a single space
-    clean_content = re.sub(r'\s+', ' ', clean_content)
+    # Enhanced cleaning: normalize whitespace (preserving line breaks)
+    # Replace multiple spaces with a single space (while keeping newlines)
+    clean_content = re.sub(r'[ \t]+', ' ', clean_content)
     # Remove leading/trailing whitespace
     clean_content = clean_content.strip()
     
@@ -466,7 +465,7 @@ with button_cols[3]:
     selected_model_key = st.radio(
         "Modell:",
         options=list(MODEL_OPTIONS.keys()),
-        index=0,  # Default to Q6 model
+        index=3,  # Default to Llama Nemotron
     )
     # Get the actual model name for API calls
     MODEL_NAME = MODEL_OPTIONS[selected_model_key]
