@@ -1,6 +1,6 @@
-# Language Simplification App KTZH
+# KlartextZH – Language Simplification App KTZH
 
-Production code and quality evaluations for the **Language Simplification App of the Cantonal Administration**.
+Production code and quality evaluations for KlartextZH, the **Language Simplification App of the Cantonal Administration**.
 
 ## Installation
 
@@ -18,15 +18,15 @@ Production code and quality evaluations for the **Language Simplification App of
   - Text complexity before/after
   - Input/output word counts
 
-  Prometheus configuration example:
+Prometheus configuration example:
 
-  ```
-  scrape_configs:
-  - job_name: 'simplify-language'
-    scrape_interval: 15s
-    static_configs:
-      - targets: ['localhost:8000']
-  ```
+```
+scrape_configs:
+- job_name: 'simplify-language'
+  scrape_interval: 15s
+  static_configs:
+    - targets: ['localhost:8000']
+```
 
 ## Observations from Log Data
 
