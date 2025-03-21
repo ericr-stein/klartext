@@ -158,7 +158,7 @@ TEXT_AREA_HEIGHT = 600
 MAX_CHARS_INPUT = 10_000
 
 
-USER_WARNING = """Mit dieser App kannst du Texte vereinfachen. Dazu schicken wir deinen Text an ein Sprachmodell (LLM), das wir im Kanton betreiben. Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 6.3.2025."""
+USER_WARNING = """Mit dieser App kannst du Texte sprachlich vereinfachen. Dazu schicken wir deinen Text an ein Sprachmodell (LLM), das wir im Kanton auf einem AFI-Server betreiben. Die Server stehen im kantonseigenen Rechenzentrum (on premise). Deine Daten werden nicht gespeichert. Daher kannst du auch **vertraulich Daten verarbeiten**. Beachtet bitte, dass Sprachmodelle Fehler machen können. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 24.3.2025."""
 
 
 # Constants for the formatting of the Word document that can be downloaded.
@@ -339,7 +339,7 @@ def create_download_link(text_input, response, analysis=False):
     footer = document.sections[0].footer
     footer.paragraphs[
         0
-    ].text = f"Erstellt am {timestamp} mit der App «Einfache Sprache» des Kantons Zürich.\nSprachmodell(e): {models_used}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
+    ].text = f"Erstellt am {timestamp} mit der App «KlartextZH» des Kantons Zürich.\nSprachmodell(e): {models_used}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
 
     # Set font for all paragraphs.
     for paragraph in document.paragraphs:
@@ -446,7 +446,7 @@ project_info = get_project_info()
 if "key_textinput" not in st.session_state:
     st.session_state.key_textinput = ""
 
-st.markdown("## 🙋‍♀️ Sprache einfach vereinfachen")
+st.markdown("## 🙋‍♀️ KlartextZH - Sprache einfach vereinfachen")
 create_project_info(project_info)
 st.caption(USER_WARNING, unsafe_allow_html=True)
 st.markdown("---")
