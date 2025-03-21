@@ -63,11 +63,11 @@ OPENAI_TEMPLATES = [
 # Model options mapping display names to full model identifiers
 MODEL_OPTIONS = {
     "Gemma 3": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
-    "Gemma 2": "hf.co/unsloth/gemma-2-27b-GGUF:Q5_K_M",
-    "Phi-4": "hf.co/microsoft/phi-4-GGUF:Q5_K_M",
-    "Llama Nemotron": "hf.co/mistralai/Llama-3.1-Nemotron-70B-GGUF:Q5_K_M",
-    "Llama Sauerkraut": "hf.co/LeoLM/Llama-3.1-Sauerkraut-70B-GGUF:Q5_K_M",
-    "Llama 3.3": "hf.co/meta-llama/Llama-3.3-70B-GGUF:Q5_K_M"
+    "Gemma 2": "gemma2:27b-instruct-q5_K_M",
+    "Phi-4": "vanilj/phi-4-unsloth:Q5_K_M",
+    "Llama Nemotron": "nemotron:70b-instruct-q5_K_M",
+    "Llama Sauerkraut": "hf.co/TheBloke/SauerkrautLM-70B-v1-GGUF:Q5_K_M",
+    "Llama 3.3": "llama3.3:latest"
 }
 
 # Model-specific temperature settings
