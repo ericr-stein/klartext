@@ -246,11 +246,12 @@ def call_llm(
             "stream": False
         }
         
-        # Make the API call
+        # Make the API call with longer timeout for analysis
+        timeout_value = 180 if analysis else 60  # 3 minutes for analysis, 1 minute for simplification
         response = requests.post(
             f"{ollama_client['base_url']}/api/generate",
             json=payload,
-            timeout=60
+            timeout=timeout_value
         )
         
         response.raise_for_status()
@@ -262,9 +263,12 @@ def call_llm(
         message = strip_markdown(message)
         
         return True, message
+    except requests.exceptions.Timeout:
+        print(f"Timeout error: Request took longer than {timeout_value} seconds")
+        return False, f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden."
     except Exception as e:
         print(f"Error: {e}")
-        return False, e
+        return False, str(e)
 
 
 def get_result_from_response(response):
@@ -553,8 +557,9 @@ if do_simplification or do_analysis:
                 )
 
     if success is False:
+        error_message = str(response).replace("'", "")[:200]  # Limit length and remove quotes for display
         st.error(
-            "Es ist ein Fehler bei der Abfrage aufgetreten. Bitte versuche es erneut."
+            f"Es ist ein Fehler bei der Abfrage aufgetreten: {error_message}. Bitte versuche es erneut."
         )
         time_processed = time.time() - start_time
         log_event(
