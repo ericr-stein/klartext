@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  simplify-app:
+    build: .
+    container_name: simplify-language
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - METRICS_PORT=8000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.simplify.rule=Host(`sp000201-t3.kt.ktzh.ch`)"
+      - "traefik.http.routers.simplify.entrypoints=websecure"
+      - "traefik.http.routers.simplify.tls=true"
+      - "traefik.http.services.simplify.loadbalancer.server.port=8501"
+      - "traefik.http.routers.metrics.rule=Host(`sp000201-t3.kt.ktzh.ch`) && PathPrefix(`/metrics`)"
+      - "traefik.http.routers.metrics.entrypoints=websecure"
+      - "traefik.http.routers.metrics.tls=true"
+      - "traefik.http.services.metrics.loadbalancer.server.port=8000"
+      - "traefik.http.routers.simplify.service=simplify"
+      - "traefik.http.routers.metrics.service=metrics"
+    networks:
+      - traefik_network
+    restart: unless-stopped
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: simplify-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - traefik_network
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`sp000201-t3.kt.ktzh.ch`) && PathPrefix(`/prometheus`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+      - "traefik.http.middlewares.prometheus-strip.stripprefix.prefixes=/prometheus"
+      - "traefik.http.routers.prometheus.middlewares=prometheus-strip"
+    
+  grafana:
+    image: grafana/grafana:latest
+    container_name: simplify-grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_SERVER_ROOT_URL=https://sp000201-t3.kt.ktzh.ch/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    networks:
+      - traefik_network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`sp000201-t3.kt.ktzh.ch`) && PathPrefix(`/grafana`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.grafana-strip.stripprefix.prefixes=/grafana"
+      - "traefik.http.routers.grafana.middlewares=grafana-strip"
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  traefik_network:
+    external: true

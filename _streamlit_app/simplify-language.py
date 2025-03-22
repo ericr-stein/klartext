@@ -1,8 +1,4 @@
-# ---------------------------------------------------------------
-# Imports
-
 import streamlit as st
-
 st.set_page_config(layout="wide")
 
 import re
@@ -13,11 +9,11 @@ from docx import Document
 from docx.shared import Pt, Inches
 import io
 import logging
-
 import numpy as np
 from zix.understandability import get_zix, get_cefr
-from llama_cpp import Llama
-
+import requests
+import os
+from metrics import track_metrics
 from utils_sample_texts import SAMPLE_TEXT_01
 
 from utils_prompts import (
@@ -28,6 +24,7 @@ from utils_prompts import (
     RULES_ES,
     RULES_LS,
     REWRITE_COMPLETE,
+    REWRITE_CONDENSED,
     OPENAI_TEMPLATE_EASIER,
     OPENAI_TEMPLATE_ES,
     OPENAI_TEMPLATE_LS,
@@ -45,108 +42,26 @@ OPENAI_TEMPLATES = [
     OPENAI_TEMPLATE_ANALYSIS_LS,
 ]
 
-# ---------------------------------------------------------------
-# Logging with Graphana and Prometheus
-
-from prometheus_client import Counter, Histogram, Gauge
-
-from streamlit_extras.prometheus import streamlit_registry
-# https://arnaudmiribel.github.io/streamlit-extras/extras/prometheus/
-# To produce accurate metrics, we need to ensure that unique metric objects are shared across app runs and sessions. Either 1) initialize metrics in a separate file and import them in the main app script, or 2) initialize metrics in a cached function (and ensure the cache is not cleared during execution).
-# For an app running locally we can view the output with curl localhost:8501/_stcore/metrics or equivalent.
-
-
-@st.cache_resource
-def get_metrics():
-    """Get metrics from Prometheus."""
-
-    registry = streamlit_registry()
-
-    # Configure standard logging for errors
-    logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    logger = logging.getLogger("simplify-language")
-
-    # Define metrics with unique prefix and connect to our registry
-    REQUEST_COUNT = Counter(
-        "simplify_app_requests_total",
-        "Total number of requests",
-        ["operation", "simplification_level", "model", "success"],
-        registry=registry,
-    )
-    PROCESSING_TIME = Histogram(
-        "simplify_app_processing_seconds",
-        "Time spent processing requests",
-        ["operation", "simplification_level", "model"],
-        buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0),
-        registry=registry,
-    )
-    INPUT_WORD_COUNT = Histogram(
-        "simplify_app_input_word_count",
-        "Number of words in input text",
-        buckets=(10, 50, 100, 200, 500, 1000, 2000, 5000),
-        registry=registry,
-    )
-    OUTPUT_WORD_COUNT = Histogram(
-        "simplify_app_output_word_count",
-        "Number of words in output text",
-        buckets=(10, 50, 100, 200, 500, 1000, 2000, 5000),
-        registry=registry,
-    )
-    TEXT_COMPLEXITY_SCORE = Gauge(
-        "simplify_app_text_complexity_score",
-        "Text complexity score before and after processing",
-        ["stage"],  # 'input' or 'output'
-        registry=registry,
-    )
-    ACTIVE_USERS = Gauge(
-        "simplify_app_active_users", "Number of active users", registry=registry
-    )
-    return (
-        REQUEST_COUNT,
-        PROCESSING_TIME,
-        INPUT_WORD_COUNT,
-        OUTPUT_WORD_COUNT,
-        TEXT_COMPLEXITY_SCORE,
-        ACTIVE_USERS,
-        logger,
-    )
-
-
-(
-    REQUEST_COUNT,
-    PROCESSING_TIME,
-    INPUT_WORD_COUNT,
-    OUTPUT_WORD_COUNT,
-    TEXT_COMPLEXITY_SCORE,
-    ACTIVE_USERS,
-    logger,
-) = get_metrics()
-
-
-# ---------------------------------------------------------------
 # Constants
-
-
-# Llama.cpp parameters.
-MODEL_PATHS = {
-    "Llama 3.1 3B": "_models/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
-    "Llama 3.1 Nemotron": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
-    "Llama 3.1 «Sauerkraut»": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
-    "Gemma 2": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
-    "Phi-4": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
-    "Llama 3.3": "_models/Llama-3.2-1B-Instruct-IQ3_M.gguf",
+MODEL_OPTIONS = {
+    "Gemma 3": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
+    "Gemma 2": "gemma2:27b-instruct-q5_K_M",
+    "Phi-4": "vanilj/phi-4-unsloth:Q5_K_M",
+    "Llama Nemotron": "nemotron:70b-instruct-q5_K_M",
+    "Llama 3.3": "llama3.3:latest"
 }
-N_GPU_LAYERS = -1
-N_CTX = 4096
-N_THREADS = 16
-FLASH_ATTN = True
-VERBOSE = False
 
-# From our testing we derive a sensible temperature of 0.5 as a good trade-off between creativity and coherence.
-TEMPERATURE = 0.5
+# Model-specific temperature settings
+MODEL_TEMPERATURES = {
+    "Gemma 3": 1.0,
+    "default": 0.5  # Used for all other models
+}
+
+# Default model to use if none is selected
+MODEL_NAME = MODEL_OPTIONS["Llama Nemotron"]  # Default to Llama Nemotron
+
+# Get Ollama host from environment variable or use default
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
 MAX_TOKENS = 8192
 
 # Height of the text areas for input and output.
@@ -158,7 +73,7 @@ TEXT_AREA_HEIGHT = 600
 MAX_CHARS_INPUT = 10_000
 
 
-USER_WARNING = """Mit dieser App kannst du Texte sprachlich vereinfachen. Dazu schicken wir deinen Text an ein Sprachmodell (LLM), das wir im Kanton auf einem AFI-Server betreiben. Die Server stehen im kantonseigenen Rechenzentrum (on premise). Deine Daten werden nicht gespeichert. Daher kannst du auch **vertraulich Daten verarbeiten**. Beachtet bitte, dass Sprachmodelle Fehler machen können. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 24.3.2025."""
+USER_WARNING = """Mit dieser App kannst du Texte vereinfachen. Dazu schicken wir deinen Text an den AFI AI Server, den wir im Kanton betreiben. Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 7.3.2025."""
 
 
 # Constants for the formatting of the Word document that can be downloaded.
@@ -177,57 +92,65 @@ LIMIT_MEDIUM = 0
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-# ---------------------------------------------------------------
 # Functions
 
-
 @st.cache_resource
-def get_llamacpp_model(
-    model_path,
-    n_gpu_layers=N_GPU_LAYERS,
-    n_ctx=N_CTX,
-    n_threads=N_THREADS,
-    flash_attn=FLASH_ATTN,
-    verbose=VERBOSE,
-):
-    """Instantiate the LLM.
-
+def get_ollama_client(base_url=OLLAMA_HOST):
+    """Create a connection to the Ollama API.
+    
     Args:
-        model_path (str): Path to the model.
-        n_gpu_layers (int): Number of layers to offload to the GPU. -1 means all layers are offloaded to the GPU.
-        n_ctx (int): Context window size.
-        n_threads (int): Number of threads.
-        flash_attn (bool): Experimental feature.
-        verbose (bool): Set to False for production.
-
+        base_url (str): URL of the Ollama service.
+        
     Returns:
-        Llama: llama.cpp model.
-
+        dict: Configuration for Ollama API calls.
     """
-    return Llama(
-        model_path=model_path,
-        n_gpu_layers=n_gpu_layers,
-        n_ctx=n_ctx,
-        n_threads=n_threads,
-        flash_attn=flash_attn,
-        verbose=verbose,
-    )
+    try:
+        response = requests.get(f"{base_url}/api/version")
+        response.raise_for_status()
+    except Exception as e:
+        st.error(f"Verbindung zum AFI AI Server fehlgeschlagen: {str(e)}")
+    
+    return {"base_url": base_url}
 
 
 @st.cache_resource
 def get_project_info():
     """Get markdown for project information that is shown in the expander section at the top of the app."""
-    with open("utils_expander.md") as f:
-        return f.read()
+    # Use the current file's directory as the base path
+    try:
+        import os
+        with open(os.path.join(os.path.dirname(__file__), "utils_expander.md")) as f:
+            return f.read()
+    except FileNotFoundError:
+        # Fallback message if file is not found
+        return """
+        # Simplifizierte Sprache
+
+        Mit dieser Applikation kannst du komplexe Texte in einfachere Sprache umwandeln.
+        
+        Die App bietet drei Stufen der Vereinfachung:
+        - Verständlichere Sprache (B2-Niveau)
+        - Einfache Sprache (B1-A2-Niveau)
+        - Leichte Sprache (A2-A1-Niveau)
+        
+        ### Image ###
+        
+        Weitere Informationen folgen.
+        """
 
 
 @st.cache_resource
 def create_project_info(project_info):
     """Create expander for project info. Add the image in the middle of the content."""
+    import os
     with st.expander("Detaillierte Informationen zum Projekt"):
         project_info = project_info.split("### Image ###")
         st.markdown(project_info[0], unsafe_allow_html=True)
-        st.image("zix_scores_validation_de.jpg", use_container_width=True)
+        try:
+            image_path = os.path.join(os.path.dirname(__file__), "zix_scores_validation_de.jpg")
+            st.image(image_path, use_container_width=True)
+        except:
+            st.info("Visualisierung zur Textverständlichkeit konnte nicht geladen werden.")
         st.markdown(project_info[1], unsafe_allow_html=True)
 
 
@@ -243,6 +166,7 @@ def create_prompt(
 ):
     """Create prompt and system message according the app settings."""
     completeness = REWRITE_COMPLETE
+
     if simplification_level == "Verständlichere Sprache":
         final_prompt = prompt_easy.format(
             completeness=completeness, rules=RULES_EASIER, prompt=text
@@ -271,40 +195,85 @@ def create_prompt(
 
 def call_llm(
     text,
-    model_id=MODEL_PATHS["Llama 3.1 Nemotron"],
+    model_name=MODEL_NAME,
     analysis=False,
 ):
-    """Invoke LLM."""
+    """Call Ollama API for text generation."""
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
+    
     try:
-        message = llm.create_chat_completion(
-            model=model_id,
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": final_prompt},
-            ],
+        ollama_client = get_ollama_client()
+        
+        # Get the display name of the model from the model_name
+        model_display_name = next((k for k, v in MODEL_OPTIONS.items() if v == model_name), None)
+        
+        # Determine temperature based on model
+        temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
+        
+        # Format system and user message in a way compatible with Ollama API
+        formatted_prompt = f"<s>[INST] <<SYS>>\n{system}\n<</SYS>>\n\n{final_prompt}[/INST]</s>"
+        
+        # Format the request for Ollama API - using the structure Ollama expects
+        payload = {
+            "model": model_name,
+            "prompt": formatted_prompt,
+            "temperature": temp,
+            "num_predict": MAX_TOKENS,
+            "stream": False
+        }
+        
+        # Make the API call with longer timeout for analysis
+        timeout_value = 180 if analysis else 60  # 3 minutes for analysis, 1 minute for simplification
+        response = requests.post(
+            f"{ollama_client['base_url']}/api/generate",
+            json=payload,
+            timeout=timeout_value
         )
-        message = message["choices"][0]["message"]["content"].strip()
+        
+        response.raise_for_status()
+        result = response.json()
+        
+        # Extract the response text
+        message = result.get("response", "")
         message = get_result_from_response(message)
         message = strip_markdown(message)
+        
         return True, message
+    except requests.exceptions.Timeout:
+        print(f"Timeout error: Request took longer than {timeout_value} seconds")
+        return False, f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden."
     except Exception as e:
         print(f"Error: {e}")
-        return False, e
+        return False, str(e)
 
 
 def get_result_from_response(response):
-    """Extract text between tags from response."""
+    """Extract content and strip ALL tags from response."""
     if simplification_level == "Verständlichere Sprache":
         tag = "verständlichesprache"
     elif simplification_level == "Einfache Sprache":
         tag = "einfachesprache"
     else:
         tag = "leichtesprache"
+    
+    # Try to find our expected tags first
     result = re.findall(rf"<{tag}>(.*?)</{tag}>", response, re.DOTALL)
-    return "\n".join(result).strip()
+    if result:
+        content = "\n".join(result).strip()
+    else:
+        # If not found, use the whole response
+        content = response.strip()
+    
+    # Strip ALL remaining tags from the content
+    clean_content = re.sub(r'<[^>]+>', '', content)
+    
+    # Enhanced cleaning: normalize whitespace (preserving line breaks)
+    # Replace multiple spaces with a single space (while keeping newlines)
+    clean_content = re.sub(r'[ \t]+', ' ', clean_content)
+    # Remove leading/trailing whitespace
+    clean_content = clean_content.strip()
+    
+    return clean_content
 
 
 def strip_markdown(text):
@@ -329,9 +298,9 @@ def create_download_link(text_input, response, analysis=False):
     p1 = document.add_paragraph("\n" + text_input)
 
     if analysis:
-        h2 = document.add_heading(f"Analyse von Sprachmodell {model_choice}")
+        h2 = document.add_heading(f"Analyse ({model_choice})")
     else:
-        h2 = document.add_heading("Vereinfachter Text von Sprachmodell")
+        h2 = document.add_heading(f"Vereinfachter Text ({model_choice})")
 
     p2 = document.add_paragraph(response)
     timestamp = datetime.now().strftime(DATETIME_FORMAT)
@@ -339,7 +308,7 @@ def create_download_link(text_input, response, analysis=False):
     footer = document.sections[0].footer
     footer.paragraphs[
         0
-    ].text = f"Erstellt am {timestamp} mit der App «KlartextZH» des Kantons Zürich.\nSprachmodell(e): {models_used}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
+    ].text = f"Erstellt am {timestamp} mit der App «Einfache Sprache» des Kantons Zürich.\nModell: {models_used}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
 
     # Set font for all paragraphs.
     for paragraph in document.paragraphs:
@@ -398,55 +367,38 @@ def log_event(
     time_processed,
     success,
 ):
-    """Log metrics to Prometheus."""
-    operation = "analysis" if do_analysis else "simplification"
+    """Log event."""
+    log_string = f"{datetime.now().strftime(DATETIME_FORMAT)}"
+    log_string += f"\t{len(text.split())}" # Number of words in the input text.
+    log_string += f"\t{len(response.split())}" # Number of words in the output text.
+    log_string += f"\t{do_analysis}"
+    log_string += f"\t{do_simplification}"
+    log_string += f"\t{simplification_level}"
+    log_string += f"\t{model_choice}"
+    log_string += f"\t{time_processed:.3f}"
+    log_string += f"\t{success}"
 
-    try:
-        # Count the request
-        REQUEST_COUNT.labels(
-            operation=operation,
-            simplification_level=simplification_level,
-            model=model_choice,
-            success=str(success),
-        ).inc()
+    logging.warning(log_string)
+    
+    # Also track metrics for Prometheus
+    track_metrics(
+        text,
+        response,
+        do_analysis, 
+        do_simplification,
+        simplification_level,
+        model_choice,
+        time_processed,
+        success
+    )
 
-        # Record processing time
-        PROCESSING_TIME.labels(
-            operation=operation,
-            simplification_level=simplification_level,
-            model=model_choice,
-        ).observe(time_processed)
-
-        # Record text length metrics
-        input_word_count = len(text.split())
-        output_word_count = (
-            len(response.split()) if success and isinstance(response, str) else 0
-        )
-
-        INPUT_WORD_COUNT.observe(input_word_count)
-        if success and output_word_count > 0:
-            OUTPUT_WORD_COUNT.observe(output_word_count)
-
-        # Standard logging for backup/debugging
-        logger.info(
-            f"Operation: {operation}, Model: {model_choice}, Level: {simplification_level}, "
-            f"Success: {success}, Time: {time_processed:.3f}s, "
-            f"Words: {input_word_count}->{output_word_count}"
-        )
-    except Exception as e:
-        # Ensure logging errors don't crash the application
-        logger.error(f"Error logging metrics: {e}")
-
-
-# ---------------------------------------------------------------
-# Main
 
 project_info = get_project_info()
 
 if "key_textinput" not in st.session_state:
     st.session_state.key_textinput = ""
 
-st.markdown("## 🙋‍♀️ KlartextZH - Sprache einfach vereinfachen")
+st.markdown("## 🙋‍♀️ Sprache einfach vereinfachen")
 create_project_info(project_info)
 st.caption(USER_WARNING, unsafe_allow_html=True)
 st.markdown("---")
@@ -486,15 +438,17 @@ with button_cols[2]:
     # )
 
 with button_cols[3]:
-    model_choice = st.radio(
-        label="Sprachmodell",
-        options=([model_name for model_name in MODEL_PATHS.keys()]),
-        index=0,
-        horizontal=True,
-        help="Alle Modelle liefern je nach Ausgangstext meist gute bis sehr gute Ergebnisse und sind alle einen Versuch wert. Mehr Details siehe Infobox oben auf der Seite.",
+    # Model selection
+    selected_model_key = st.radio(
+        "Modell:",
+        options=list(MODEL_OPTIONS.keys()),
+        index=3,  # Default to Llama Nemotron
     )
+    # Get the actual model name for API calls
+    MODEL_NAME = MODEL_OPTIONS[selected_model_key]
+    # Store friendly name for display/logging
+    model_choice = selected_model_key
 
-# Instantiate empty containers for the text areas.
 cols = st.columns([2, 2, 1])
 
 with cols[0]:
@@ -504,8 +458,6 @@ with cols[1]:
 with cols[2]:
     placeholder_analysis = st.empty()
 
-
-# Populate containers.
 with source_text:
     st.text_area(
         "Ausgangstext, den du vereinfachen möchtest",
@@ -529,9 +481,8 @@ with placeholder_analysis:
     )
 
 
-# Derive model_id from explicit model_choice.
-model_id = MODEL_PATHS[model_choice]
-llm = get_llamacpp_model(model_id)
+# Get Ollama client
+ollama_client = get_ollama_client()
 
 # Start processing if one of the processing buttons is clicked.
 if do_simplification or do_analysis:
@@ -541,7 +492,6 @@ if do_simplification or do_analysis:
         st.stop()
 
     score_source = get_zix(st.session_state.key_textinput)
-    TEXT_COMPLEXITY_SCORE.labels(stage="input").set(score_source)
     # We add 0 to avoid negative zero.
     score_source_rounded = int(np.round(score_source, 0) + 0)
     cefr_source = get_cefr(score_source)
@@ -569,21 +519,22 @@ if do_simplification or do_analysis:
             )
 
         with placeholder_analysis.container():
-            with st.spinner("Ich arbeite..."):
+            with st.spinner("Text wird verarbeitet..."):
                 success, response = call_llm(
                     st.session_state.key_textinput,
-                    model_id=model_id,
+                    model_name=MODEL_NAME,
                     analysis=do_analysis,
                 )
 
     if success is False:
+        error_message = str(response).replace("'", "")[:200]  # Limit length and remove quotes for display
         st.error(
-            "Es ist ein Fehler bei der Abfrage aufgetreten. Bitte versuche es erneut."
+            f"Es ist ein Fehler bei der Abfrage aufgetreten: {error_message}. Bitte versuche es erneut."
         )
         time_processed = time.time() - start_time
         log_event(
             st.session_state.key_textinput,
-            "Error from modell call.",
+            "Error from model call.",
             do_analysis,
             do_simplification,
             simplification_level,
@@ -601,6 +552,7 @@ if do_simplification or do_analysis:
     # Often the models return the German letter ß as ss. Replace it.
     response = response.replace("ß", "ss")
     time_processed = time.time() - start_time
+
     with placeholder_result.container():
         st.text_area(
             text,
@@ -608,11 +560,24 @@ if do_simplification or do_analysis:
             value=response,
         )
         if do_simplification:
-            score_target = get_zix(response)
-            TEXT_COMPLEXITY_SCORE.labels(stage="output").set(score_target)
-            score_target_rounded = int(np.round(score_target, 0) + 0)
-            cefr_target = get_cefr(score_target)
-            if score_target < LIMIT_HARD:
+            # Check if we have content to analyze
+            if response.strip():
+                # Get ZIX score and handle None values
+                score_target = get_zix(response)
+                # Only proceed with calculations if we got a valid score
+                if score_target is not None:
+                    score_target_rounded = int(np.round(score_target, 0) + 0)
+                    cefr_target = get_cefr(score_target)
+                else:
+                    # Handle case where ZIX scoring returns None
+                    score_target_rounded = 0
+                    cefr_target = "?"
+            else:
+                # Handle empty response case
+                score_target_rounded = 0
+                cefr_target = "?"
+                
+            if score_target is None or score_target < LIMIT_HARD:
                 st.markdown(
                     f"Dein vereinfachter Text ist **:red[schwer verständlich]**. (Wert: {score_target_rounded}). Das entspricht etwa dem **:red[Sprachniveau {cefr_target}]**."
                 )
@@ -625,10 +590,16 @@ if do_simplification or do_analysis:
                     f"Dein vereinfachter Text ist **:green[gut verständlich]**. (Wert: {score_target_rounded}). Das entspricht etwa dem **:green[Sprachniveau {cefr_target}]**."
                 )
             with placeholder_analysis.container():
+                # Calculate delta safely only if score_target is valid
+                if score_target is not None:
+                    delta = int(np.round(score_target - score_source, 0))
+                else:
+                    delta = None
+                
                 text_analysis = st.metric(
                     label="Verständlichkeit",
                     value=score_target_rounded,
-                    delta=int(np.round(score_target - score_source, 0)),
+                    delta=delta,
                     help="Verständlichkeit auf einer Skala von -10 bis 10 (von -10 = extrem schwer verständlich bis 10 = sehr gut verständlich). Texte in Einfacher Sprache haben meist einen Wert von 0 bis 4 oder höher.",
                 )
 
