@@ -14,13 +14,23 @@ from zix.understandability import get_zix, get_cefr
 from metrics import track_metrics
 from utils_sample_texts import SAMPLE_TEXT_01
 from utils_prompts import (
-    SYSTEM_MESSAGE_EASIER, SYSTEM_MESSAGE_ES, SYSTEM_MESSAGE_LS,
-    RULES_EASIER, RULES_ES, RULES_LS, REWRITE_COMPLETE,
-    OPENAI_TEMPLATE_EASIER, OPENAI_TEMPLATE_ES, OPENAI_TEMPLATE_LS,
-    OPENAI_TEMPLATE_ANALYSIS_EASIER, OPENAI_TEMPLATE_ANALYSIS_ES, OPENAI_TEMPLATE_ANALYSIS_LS
+    SYSTEM_MESSAGE_EASIER,
+    SYSTEM_MESSAGE_ES,
+    SYSTEM_MESSAGE_LS,
+    RULES_EASIER,
+    RULES_ES,
+    RULES_LS,
+    REWRITE_COMPLETE,
+    OPENAI_TEMPLATE_EASIER,
+    OPENAI_TEMPLATE_ES,
+    OPENAI_TEMPLATE_LS,
+    OPENAI_TEMPLATE_ANALYSIS_EASIER,
+    OPENAI_TEMPLATE_ANALYSIS_ES,
+    OPENAI_TEMPLATE_ANALYSIS_LS,
 )
 
 import streamlit as st
+
 st.set_page_config(layout="wide")
 
 OPENAI_TEMPLATES = [
@@ -38,13 +48,13 @@ MODEL_OPTIONS = {
     "Gemma 2": "gemma2:27b-instruct-q5_K_M",
     "Phi-4": "hf.co/unsloth/phi-4-GGUF:Q8_0",
     "Llama Nemotron": "nemotron:70b-instruct-q5_K_M",
-    "Llama 3.3": "hf.co/unsloth/Llama-3.3-70B-Instruct-GGUF:Q5_K_M"
+    "Llama 3.3": "hf.co/unsloth/Llama-3.3-70B-Instruct-GGUF:Q5_K_M",
 }
 
 # Model-specific temperature settings
 MODEL_TEMPERATURES = {
     "Gemma 3": 1.0,
-    "default": 0.5  # Used for all other models
+    "default": 0.5,  # Used for all other models
 }
 
 # Default model to use if none is selected
@@ -84,13 +94,14 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # Functions
 
+
 @st.cache_resource
 def get_ollama_client(base_url=OLLAMA_HOST):
     """Create a connection to the Ollama API.
-    
+
     Args:
         base_url (str): URL of the Ollama service.
-        
+
     Returns:
         dict: Configuration for Ollama API calls.
     """
@@ -99,7 +110,7 @@ def get_ollama_client(base_url=OLLAMA_HOST):
         response.raise_for_status()
     except Exception as e:
         st.error(f"Verbindung zum AFI AI Server fehlgeschlagen: {str(e)}")
-    
+
     return {"base_url": base_url}
 
 
@@ -109,6 +120,7 @@ def get_project_info():
     # Use the current file's directory as the base path
     try:
         import os
+
         with open(os.path.join(os.path.dirname(__file__), "utils_expander.md")) as f:
             return f.read()
     except FileNotFoundError:
@@ -133,14 +145,19 @@ def get_project_info():
 def create_project_info(project_info):
     """Create expander for project info. Add the image in the middle of the content."""
     import os
+
     with st.expander("Detaillierte Informationen zum Projekt"):
         project_info = project_info.split("### Image ###")
         st.markdown(project_info[0], unsafe_allow_html=True)
         try:
-            image_path = os.path.join(os.path.dirname(__file__), "zix_scores_validation_de.jpg")
+            image_path = os.path.join(
+                os.path.dirname(__file__), "zix_scores_validation_de.jpg"
+            )
             st.image(image_path, use_container_width=True)
         except FileNotFoundError:
-            st.info("Visualisierung zur Textverständlichkeit konnte nicht geladen werden.")
+            st.info(
+                "Visualisierung zur Textverständlichkeit konnte nicht geladen werden."
+            )
         st.markdown(project_info[1], unsafe_allow_html=True)
 
 
@@ -190,48 +207,55 @@ def call_llm(
 ):
     """Call Ollama API for text generation."""
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
-    
+
     try:
         ollama_client = get_ollama_client()
-        
+
         # Get the display name of the model from the model_name
-        model_display_name = next((k for k, v in MODEL_OPTIONS.items() if v == model_name), None)
-        
+        model_display_name = next(
+            (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
+        )
+
         # Determine temperature based on model
         temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
-        
+
         # Use Ollama's native chat formatting
         payload = {
             "model": model_name,
             "messages": [
                 {"role": "system", "content": system},
-                {"role": "user", "content": final_prompt}
+                {"role": "user", "content": final_prompt},
             ],
             "temperature": temp,
             "num_predict": MAX_TOKENS,
-            "stream": False
+            "stream": False,
         }
-        
+
         # Make the API call with longer timeout for analysis
-        timeout_value = 180 if analysis else 60  # 3 minutes for analysis, 1 minute for simplification
+        timeout_value = (
+            180 if analysis else 60
+        )  # 3 minutes for analysis, 1 minute for simplification
         response = requests.post(
             f"{ollama_client['base_url']}/api/generate",
             json=payload,
-            timeout=timeout_value
+            timeout=timeout_value,
         )
-        
+
         response.raise_for_status()
         result = response.json()
-        
+
         # Extract the response text
         message = result.get("response", "")
         message = get_result_from_response(message)
         message = strip_markdown(message)
-        
+
         return True, message
     except requests.exceptions.Timeout:
         print(f"Timeout error: Request took longer than {timeout_value} seconds")
-        return False, f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden."
+        return (
+            False,
+            f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden.",
+        )
     except Exception as e:
         print(f"Error: {e}")
         return False, str(e)
@@ -337,8 +361,8 @@ def log_event(
 ):
     """Log event."""
     log_string = f"{datetime.now().strftime(DATETIME_FORMAT)}"
-    log_string += f"\t{len(text.split())}" # Number of words in the input text.
-    log_string += f"\t{len(response.split())}" # Number of words in the output text.
+    log_string += f"\t{len(text.split())}"  # Number of words in the input text.
+    log_string += f"\t{len(response.split())}"  # Number of words in the output text.
     log_string += f"\t{do_analysis}"
     log_string += f"\t{do_simplification}"
     log_string += f"\t{simplification_level}"
@@ -347,17 +371,17 @@ def log_event(
     log_string += f"\t{success}"
 
     logging.warning(log_string)
-    
+
     # Also track metrics for Prometheus
     track_metrics(
         text,
         response,
-        do_analysis, 
+        do_analysis,
         do_simplification,
         simplification_level,
         model_choice,
         time_processed,
-        success
+        success,
     )
 
 
@@ -493,7 +517,9 @@ if do_simplification or do_analysis:
                 )
 
     if success is False:
-        error_message = str(response).replace("'", "")[:200]  # Limit length and remove quotes for display
+        error_message = str(response).replace("'", "")[
+            :200
+        ]  # Limit length and remove quotes for display
         st.error(
             f"Es ist ein Fehler bei der Abfrage aufgetreten: {error_message}. Bitte versuche es erneut."
         )
@@ -542,7 +568,7 @@ if do_simplification or do_analysis:
                 # Handle empty response case
                 score_target_rounded = 0
                 cefr_target = "?"
-                
+
             if score_target is not None and score_target < LIMIT_HARD:
                 st.markdown(
                     f"Dein vereinfachter Text ist **:red[schwer verständlich]**. (Wert: {score_target_rounded}). Das entspricht etwa dem **:red[Sprachniveau {cefr_target}]**."
@@ -561,7 +587,7 @@ if do_simplification or do_analysis:
                     delta = int(np.round(score_target - score_source, 0))
                 else:
                     delta = None
-                
+
                 text_analysis = st.metric(
                     label="Verständlichkeit",
                     value=score_target_rounded,
