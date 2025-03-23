@@ -14,7 +14,7 @@ Sei immer wahrheitsgemäß und objektiv. Mache keine Annahmen. Schreibe nur das,
 Arbeite die Texte immer vollständig durch und kürze nicht.
 Schreibe einfach und klar und immer in deutscher Sprache. 
 Gib nur Text aus, keine Markdown-Formatierung, kein HTML.
-Gib dein Ergebnis innerhalb von <verständliche-sprache> Tags aus.
+Gib dein Ergebnis innerhalb von <verständlichesprache> Tags aus.
 """.strip()
 
 
@@ -156,7 +156,7 @@ Beachte folgende Regeln:
 {completeness}
 {rules}
 
-Gib den vereinfachten Text aus, ohne Einleitung oder Kommentar. Gib das Ergebnis in <verständliche-sprache>-Tags aus: <verständliche-sprache>...</verständliche-sprache>
+Gib den vereinfachten Text aus, ohne Einleitung oder Kommentar. Gib das Ergebnis in <verständlichesprache>-Tags aus: <verständlichesprache>...</verständlichesprache>
 
 Hier ist der schwer verständliche Text:
 
@@ -217,7 +217,7 @@ Die Regeln für verständlicheren Text sind diese hier:
 
 {rules}
 
-Schreibe jetzt deine Analyse und gib diese innerhalb von <verständliche-sprache> Tags aus. Gib nur Text aus, keine Markdown-Formatierung, kein HTML.
+Schreibe jetzt deine Analyse und gib diese innerhalb von <verständlichesprache> Tags aus. Gib nur Text aus, keine Markdown-Formatierung, kein HTML.
 
 Hier ist der schwer verständliche Text:
 
