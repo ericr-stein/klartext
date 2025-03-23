@@ -4,15 +4,15 @@ Mit dieser Applikation möchten wir Mitarbeitende der kantonalen Verwaltung dabe
 
 - Die App ist ausschliesslich für Mitarbeitende der kantonalen Verwaltung.
 - Du darfst die App ausschliesslich für dienstliche Zwecke nutzen.
-- Mit der App kannst du vertrauliche Informationen verarbeiten.
-- Die App speichert keine Texte und keine Ergebnisse.
+- **Mit der App kannst du vertrauliche Informationen verarbeiten.**
+- **Die App speichert keine Texte und keine Ergebnisse. Alle Daten werden auf einem KI-Server beim AFI in einem eigenen Rechenzentrum *(on premise)* verarbeitet.**
 - Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig.
 
 ## Was macht diese App?
 
 **Diese App vereinfacht einen von dir eingegebenen Text.**
 
-Dein Text wird dazu in der App aufbereitet und an ein sogenanntes grosses Sprachmodell (LLM, Large Language Model) eines kommerziellen Anbieters geschickt. Diese Sprachmodelle sind in der Lage, Texte nach Anweisungen umzuformulieren und dabei zu vereinfachen.
+Dein Text wird dazu in der App aufbereitet und an ein sogenanntes grosses Sprachmodell (LLM, Large Language Model) auf einem AFI KI-Server geschickt. Diese Sprachmodelle sind in der Lage, Texte nach Anweisungen umzuformulieren und dabei zu vereinfachen.
 
 Die App bietet dir drei verschiedene Grade der Vereinfachung:
 
@@ -27,13 +27,10 @@ Die App bietet dir drei verschiedene Grade der Vereinfachung:
 Momentan kannst du eins von 4 Sprachmodellen wählen:
 
 - [Llama 3.1 Nemotron](https://huggingface.co/nvidia/Llama-3.1-Nemotron-70B-Instruct)
-- [Llama 3.1 «Sauerkraut»](https://huggingface.co/VAGOsolutions/Llama-3.1-SauerkrautLM-70b-Instruct)
+- [Llama 3.3](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct)
+- [Gemma 2](https://huggingface.co/google/gemma-3-27b-it)
 - [Gemma 2](https://huggingface.co/google/gemma-2-27b)
 - [Phi-4](https://huggingface.co/microsoft/phi-4)
-
-Speziell für Leichte Sprache eignet sich::
-
-- [Llama 3.3](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct)
 
 Alle Modelle analysieren und schreiben unterschiedlich und sind alle einen Versuch wert.
 
@@ -59,4 +56,4 @@ Wir möchten das System kontinuierlich nach Nutzungsbedürfnissen verbessern. Wi
 
 ## Versionsverlauf
 
-- **v0.1** 31.01.2025 - *Erste Version der App.*
+- **v0.1** 24.03.2025 - *Erste Version der App.*
