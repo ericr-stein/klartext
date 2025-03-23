@@ -1,7 +1,6 @@
 import os
 from prometheus_client import Counter, Histogram, Summary, Gauge, start_http_server
 import threading
-import time
 
 # Initialize Prometheus metrics
 REQUEST_COUNT = Counter(

@@ -1,37 +1,27 @@
-import streamlit as st
-st.set_page_config(layout="wide")
-
 import re
-from datetime import datetime
 import time
 import base64
-from docx import Document
-from docx.shared import Pt, Inches
 import io
 import logging
 import numpy as np
-from zix.understandability import get_zix, get_cefr
 import requests
 import os
+from datetime import datetime
+
+from docx import Document
+from docx.shared import Pt, Inches
+from zix.understandability import get_zix, get_cefr
 from metrics import track_metrics
 from utils_sample_texts import SAMPLE_TEXT_01
-
 from utils_prompts import (
-    SYSTEM_MESSAGE_EASIER,
-    SYSTEM_MESSAGE_ES,
-    SYSTEM_MESSAGE_LS,
-    RULES_EASIER,
-    RULES_ES,
-    RULES_LS,
-    REWRITE_COMPLETE,
-    REWRITE_CONDENSED,
-    OPENAI_TEMPLATE_EASIER,
-    OPENAI_TEMPLATE_ES,
-    OPENAI_TEMPLATE_LS,
-    OPENAI_TEMPLATE_ANALYSIS_EASIER,
-    OPENAI_TEMPLATE_ANALYSIS_ES,
-    OPENAI_TEMPLATE_ANALYSIS_LS,
+    SYSTEM_MESSAGE_EASIER, SYSTEM_MESSAGE_ES, SYSTEM_MESSAGE_LS,
+    RULES_EASIER, RULES_ES, RULES_LS, REWRITE_COMPLETE,
+    OPENAI_TEMPLATE_EASIER, OPENAI_TEMPLATE_ES, OPENAI_TEMPLATE_LS,
+    OPENAI_TEMPLATE_ANALYSIS_EASIER, OPENAI_TEMPLATE_ANALYSIS_ES, OPENAI_TEMPLATE_ANALYSIS_LS
 )
+
+import streamlit as st
+st.set_page_config(layout="wide")
 
 OPENAI_TEMPLATES = [
     OPENAI_TEMPLATE_EASIER,
@@ -46,9 +36,9 @@ OPENAI_TEMPLATES = [
 MODEL_OPTIONS = {
     "Gemma 3": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
     "Gemma 2": "gemma2:27b-instruct-q5_K_M",
-    "Phi-4": "vanilj/phi-4-unsloth:Q5_K_M",
+    "Phi-4": "hf.co/unsloth/phi-4-GGUF:Q8_0",
     "Llama Nemotron": "nemotron:70b-instruct-q5_K_M",
-    "Llama 3.3": "llama3.3:latest"
+    "Llama 3.3": "hf.co/unsloth/Llama-3.3-70B-Instruct-GGUF:Q5_K_M"
 }
 
 # Model-specific temperature settings
@@ -149,7 +139,7 @@ def create_project_info(project_info):
         try:
             image_path = os.path.join(os.path.dirname(__file__), "zix_scores_validation_de.jpg")
             st.image(image_path, use_container_width=True)
-        except:
+        except FileNotFoundError:
             st.info("Visualisierung zur Textverständlichkeit konnte nicht geladen werden.")
         st.markdown(project_info[1], unsafe_allow_html=True)
 
@@ -210,13 +200,13 @@ def call_llm(
         # Determine temperature based on model
         temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
         
-        # Format system and user message in a way compatible with Ollama API
-        formatted_prompt = f"<s>[INST] <<SYS>>\n{system}\n<</SYS>>\n\n{final_prompt}[/INST]</s>"
-        
-        # Format the request for Ollama API - using the structure Ollama expects
+        # Use Ollama's native chat formatting
         payload = {
             "model": model_name,
-            "prompt": formatted_prompt,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": final_prompt}
+            ],
             "temperature": temp,
             "num_predict": MAX_TOKENS,
             "stream": False
@@ -248,39 +238,22 @@ def call_llm(
 
 
 def get_result_from_response(response):
-    """Extract content and strip ALL tags from response."""
+    """Extract text between tags from response."""
     if simplification_level == "Verständlichere Sprache":
         tag = "verständlichesprache"
     elif simplification_level == "Einfache Sprache":
         tag = "einfachesprache"
     else:
         tag = "leichtesprache"
-    
-    # Try to find our expected tags first
     result = re.findall(rf"<{tag}>(.*?)</{tag}>", response, re.DOTALL)
-    if result:
-        content = "\n".join(result).strip()
-    else:
-        # If not found, use the whole response
-        content = response.strip()
-    
-    # Strip ALL remaining tags from the content
-    clean_content = re.sub(r'<[^>]+>', '', content)
-    
-    # Enhanced cleaning: normalize whitespace (preserving line breaks)
-    # Replace multiple spaces with a single space (while keeping newlines)
-    clean_content = re.sub(r'[ \t]+', ' ', clean_content)
-    # Remove leading/trailing whitespace
-    clean_content = clean_content.strip()
-    
-    return clean_content
+    return "\n".join(result).strip()
 
 
 def strip_markdown(text):
     """Strip markdown from text."""
-    # Remove markdown headers.
+    # Remove markdown headers
     text = re.sub(r"#+\s", "", text)
-    # Remove markdown italic and bold.
+    # Remove markdown italic and bold
     text = re.sub(r"\*\*|\*|__|_", "", text)
     return text
 
@@ -577,7 +550,7 @@ if do_simplification or do_analysis:
                 score_target_rounded = 0
                 cefr_target = "?"
                 
-            if score_target is None or score_target < LIMIT_HARD:
+            if score_target is not None and score_target < LIMIT_HARD:
                 st.markdown(
                     f"Dein vereinfachter Text ist **:red[schwer verständlich]**. (Wert: {score_target_rounded}). Das entspricht etwa dem **:red[Sprachniveau {cefr_target}]**."
                 )
