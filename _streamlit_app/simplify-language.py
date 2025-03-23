@@ -390,7 +390,7 @@ project_info = get_project_info()
 if "key_textinput" not in st.session_state:
     st.session_state.key_textinput = ""
 
-st.markdown("## 🙋‍♀️ Sprache einfach vereinfachen")
+st.markdown("## 🙋‍♀️ KlartextZH - Sprache einfach vereinfachen")
 create_project_info(project_info)
 st.caption(USER_WARNING, unsafe_allow_html=True)
 st.markdown("---")
