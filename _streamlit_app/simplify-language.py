@@ -63,7 +63,7 @@ TEXT_AREA_HEIGHT = 600
 MAX_CHARS_INPUT = 10_000
 
 
-USER_WARNING = """Mit dieser App kannst du Texte vereinfachen. Dazu schicken wir deinen Text an den AFI AI Server, den wir im Kanton betreiben. Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 7.3.2025."""
+USER_WARNING = """Mit der KlartextZH-App kannst du Texte sprachlich vereinfachen. Dazu schicken wir deinen Text an den AFI KI-Server, den wir im Kanton betreiben. Du kannst daher auch vertrauliche Daten eingeben. Bitte beachte: KI-Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 24.3.2025."""
 
 
 # Constants for the formatting of the Word document that can be downloaded.
@@ -114,9 +114,9 @@ def get_project_info():
     except FileNotFoundError:
         # Fallback message if file is not found
         return """
-        # Simplifizierte Sprache
+        # KlartextZH - Sprache einfach vereinfachen
 
-        Mit dieser Applikation kannst du komplexe Texte in einfachere Sprache umwandeln.
+        Mit dieser Applikation kannst du komplexe Texte in verständlichere Sprache umwandeln.
         
         Die App bietet drei Stufen der Vereinfachung:
         - Verständlichere Sprache (B2-Niveau)
@@ -281,7 +281,7 @@ def create_download_link(text_input, response, analysis=False):
     footer = document.sections[0].footer
     footer.paragraphs[
         0
-    ].text = f"Erstellt am {timestamp} mit der App «Einfache Sprache» des Kantons Zürich.\nModell: {models_used}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
+    ].text = f"Erstellt am {timestamp} mit der KlartextZH-App » des Kantons Zürich.\nModell: {models_used}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
 
     # Set font for all paragraphs.
     for paragraph in document.paragraphs:
@@ -416,6 +416,7 @@ with button_cols[3]:
         "Modell:",
         options=list(MODEL_OPTIONS.keys()),
         index=3,  # Default to Llama Nemotron
+        help="Wähle das Modell, das für die Vereinfachung verwendet werden soll. Jedes Modell schreibt unterschiedlich. Alle Modelle sind von uns getestet und einen Versuch wert.",
     )
     # Get the actual model name for API calls
     MODEL_NAME = MODEL_OPTIONS[selected_model_key]
@@ -522,7 +523,7 @@ if do_simplification or do_analysis:
     text = "Dein vereinfachter Text"
     if do_analysis:
         text = "Deine Analyse"
-    # Often the models return the German letter ß as ss. Replace it.
+    # Often the models return the German letter ß. Replace it with the Swiss German equivalent ss.
     response = response.replace("ß", "ss")
     time_processed = time.time() - start_time
 
