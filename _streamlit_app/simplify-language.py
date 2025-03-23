@@ -325,11 +325,6 @@ def create_download_link(text_input, response, analysis=False):
     st.markdown(download_url, unsafe_allow_html=True)
 
 
-def clean_log(text):
-    """Remove linebreaks and tabs from log messages that otherwise would yield problems when parsing the logs."""
-    return text.replace("\n", " ").replace("\t", " ")
-
-
 def log_event(
     text,
     response,
@@ -405,10 +400,7 @@ with button_cols[2]:
         index=1,
         help="**«Verständlichere Sprache»** überarbeitet den Text vorsichtiger und zielt auf Sprachniveau B2. **«Einfache Sprache»** formuliert nach den Regeln für Einfache Sprache und zielt auf B1 bis A2. **«Leichte Sprache»** folgt den Regeln für Leichte Sprache und zielt auf A2 bis A1.",
     )
-    # condense_text = st.toggle(
-    #     "Text verdichten",
-    #     help="**Schalter aktiviert**: Modell konzentriert sich auf essentielle Informationen und versucht, Unwichtiges wegzulassen. **Schalter nicht aktiviert**: Modell versucht, alle Informationen zu übernehmen.",
-    # )
+
 
 with button_cols[3]:
     # Model selection
