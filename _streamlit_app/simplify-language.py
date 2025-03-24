@@ -208,6 +208,7 @@ def call_llm(
     analysis=False,
 ):
     """Call Ollama API using OpenAI SDK for text generation."""
+    text = text.strip()
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
     
     try:
