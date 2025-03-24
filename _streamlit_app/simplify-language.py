@@ -18,6 +18,7 @@ from utils_prompts import (
     SYSTEM_MESSAGE_EASIER,
     SYSTEM_MESSAGE_ES,
     SYSTEM_MESSAGE_LS,
+    SYSTEM_MESSAGE_ANALYSIS,
     RULES_EASIER,
     RULES_ES,
     RULES_LS,
@@ -180,25 +181,28 @@ def create_prompt(
         final_prompt = prompt_easy.format(
             completeness=completeness, rules=RULES_EASIER, prompt=text
         )
+        system = SYSTEM_MESSAGE_EASIER
         if analysis:
             final_prompt = analysis_easy.format(
                 completeness=completeness, rules=RULES_EASIER, prompt=text
             )
-        system = SYSTEM_MESSAGE_EASIER
+            system = SYSTEM_MESSAGE_ANALYSIS
     elif simplification_level == "Einfache Sprache":
         final_prompt = prompt_es.format(
             completeness=completeness, rules=RULES_ES, prompt=text
         )
+        system = SYSTEM_MESSAGE_ES
         if analysis:
             final_prompt = analysis_es.format(rules=RULES_ES, prompt=text)
-        system = SYSTEM_MESSAGE_ES
+        system = SYSTEM_MESSAGE_ANALYSIS
     else:
         final_prompt = prompt_ls.format(
             completeness=completeness, rules=RULES_LS, prompt=text
         )
+        system = SYSTEM_MESSAGE_LS
         if analysis:
             final_prompt = analysis_ls.format(rules=RULES_LS, prompt=text)
-        system = SYSTEM_MESSAGE_LS
+        system = SYSTEM_MESSAGE_ANALYSIS
     return final_prompt, system
 
 
@@ -240,7 +244,7 @@ def call_llm(
         # Extract the response message
         message = response.choices[0].message.content
         # message = get_result_from_response(message)
-        # message = strip_markdown(message)
+        message = strip_markdown(message)
 
         return True, message
 
