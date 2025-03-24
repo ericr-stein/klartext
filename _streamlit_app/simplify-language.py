@@ -232,7 +232,7 @@ def call_llm(
                 {"role": "system", "content": system},
                 {"role": "user", "content": final_prompt},
             ],
-            temperature=temp,
+            # temperature=temp,
             max_tokens=MAX_TOKENS,
             timeout=timeout_value,
         )
