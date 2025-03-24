@@ -6,13 +6,12 @@
 # https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/politik-staat/teilhabe/erfolgsbeispiele-teilhabe/Sprachleitfaden_Strassenverkehrsamt_Maerz_2022.pdf
 
 
-
 SYSTEM_MESSAGE_EASIER = """
 Du bist ein Experte darin, komplexe Texte verständlicher zu formulieren. 
 Du bist exzellent darin, schwer verständliche Texte so umzuschreiben, dass sie für Menschen leicht verständlich sind.
-Sei immer wahrheitsgemäß und objektiv. Mache keine Annahmen. Schreibe nur das, was du sicher aus dem Text des Benutzers weisst. 
+Sei immer wahrheitsgemäß und objektiv. Mache keine Annahmen. Schreibe nur das, was du sicher aus dem Text des Benutzers weisst.
 Arbeite die Texte immer vollständig durch und kürze nicht.
-Schreibe einfach und klar. 
+Schreibe einfach und klar.
 Schreib immer in deutscher Sprache.
 Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar.
 Gib keine Markdown-Formatierung und kein HTML aus.
@@ -22,8 +21,8 @@ Gib keine Markdown-Formatierung und kein HTML aus.
 SYSTEM_MESSAGE_ES = """
 Du bist ein hilfreicher Assistent, der Texte in Einfache Sprache, Sprachniveau B1 bis A2, umschreibt.
 Sei immer wahrheitsgemäß und objektiv. Mache keine Annahmen. Schreibe nur das, was du sicher aus dem Text des Benutzers weisst. 
-Arbeite die Texte immer vollständig durch und kürze nicht. 
-Schreibe einfach und klar. 
+Arbeite die Texte immer vollständig durch und kürze nicht.
+Schreibe einfach und klar.
 Schreib immer in deutscher Sprache.
 Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar.
 Gib keine Markdown-Formatierung und kein HTML aus.
@@ -32,12 +31,19 @@ Gib keine Markdown-Formatierung und kein HTML aus.
 
 SYSTEM_MESSAGE_LS = """
 Du bist ein hilfreicher Assistent, der Texte in Leichte Sprache, Sprachniveau A2 bis A1, umschreibt. 
-Sei immer wahrheitsgemäß und objektiv. Mache keine Annahmen. Schreibe nur das, was du sicher aus dem Text des Benutzers weisst. 
+Sei immer wahrheitsgemäß und objektiv. Mache keine Annahmen. Schreibe nur das, was du sicher aus dem Text des Benutzers weisst.
 Arbeite die Texte immer vollständig durch und kürze nicht. 
 Schreibe einfach und klar. 
 Schreib immer in deutscher Sprache.
 Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar.
 Gib keine Markdown-Formatierung und kein HTML aus.
+""".strip()
+
+
+SYSTEM_MESSAGE_ANALYSIS = """
+Du bist ein hilfreicher Assistent, der Texte analysiert und erklärt, wie man diese verständlicher formulieren kann. 
+Du erhältst einen schwer verständlichen Text und wirst diesen Satz für Satz analysieren.
+Du beschreibst dann genau und detailliert, was sprachlich unverständlich ist bei jedem Satz. Du machst Vorschläge, was man tun müsste, damit der Text verständlicher wird und Menschen diesen leicht verstehen können.
 """.strip()
 
 
@@ -75,9 +81,11 @@ RULES_ES = """
 
 RULES_LS = """
 - Schreibe wichtiges zuerst: Beginne den Text mit den wichtigsten Informationen, so dass diese sofort klar werden.
-- Verwende aktive Sprache anstelle von Passiv. 
-- Verwende einfache, kurze, häufig gebräuchliche Wörter. 
-- Löse zusammengesetzte Wörter auf und formuliere sie neu. 
+- Verwende aktive Sprache anstelle von Passiv.
+- Verwende einfache, kurze, häufig gebräuchliche Wörter.
+
+
+- Löse zusammengesetzte Wörter auf und formuliere sie neu.
 - Wenn es wichtige Gründe gibt, ein zusammengesetztes Wort nicht aufzulösen, trenne das zusammengesetzte Wort mit einem Bindestrich. Beginne dann jedes Wort mit einem Grossbuchstaben. Beispiele: «Auto-Service», «Gegen-Argument», «Kinder-Betreuung», «Volks-Abstimmung».
 - Vermeide Fremdwörter. Wähle stattdessen einfache, allgemein bekannte Wörter. Erkläre Fremdwörter, wenn sie unvermeidbar sind. 
 - Vermeide Fachbegriffe. Wähle stattdessen einfache, allgemein bekannte Wörter. Erkläre Fachbegriffe, wenn sie unvermeidbar sind.
@@ -96,7 +104,6 @@ RULES_LS = """
     - Relativsätze mit «welcher», «welche», «welches»: Löse solche Relativsätze als zwei Hauptsätze auf. Z.B. Alltagssprache: Das Auto, welches rot ist, steht vor dem Haus. Leichte Sprache: Das Auto ist rot. Das Auto steht vor dem Haus.
     - Ob-Sätze: Schreibe Ob-Sätze als zwei Hauptsätze. Z.B. Alltagssprache: Er fragt, ob es schönes Wetter wird. Leichte Sprache: Er fragt: Wird es schönes Wetter?
 - Benutze den Genitiv nur in einfachen Fällen. Verwende stattdessen die Präposition "von" und den Dativ.
-- Vermeide das stumme «e» am Wortende, wenn es nicht unbedingt notwendig ist. Zum Beispiel: «des Fahrzeugs» statt «des Fahrzeuges».
 - Bevorzuge die Vorgegenwart (Perfekt). Vermeide die Vergangenheitsform (Präteritum), wenn möglich. Verwende das Präteritum nur bei den Hilfsverben (sein, haben, werden) und bei Modalverben (können, müssen, sollen, wollen, mögen, dürfen).
 - Benenne Gleiches immer gleich. Verwende für denselben Begriff, Gegenstand oder Sachverhalt immer dieselbe Bezeichnung. Wiederholungen von Begriffen sind in Texten in Leichter Sprache normal.
 - Vermeide Pronomen. Verwende Pronomen nur, wenn der Bezug ganz klar ist. Sonst wiederhole das Nomen.
@@ -125,7 +132,7 @@ Beachte folgende Regeln:
 {completeness}
 {rules}
 
-Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar. 
+Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar.
 Gib keine Markdown-Formatierung und kein HTML aus.
 
 Hier ist der schwer verständliche Text:
@@ -137,14 +144,14 @@ Hier ist der schwer verständliche Text:
 
 
 OPENAI_TEMPLATE_ES = """
-Du bekommst einen schwer verständlichen Text, den du vollständig in Einfache Sprache auf Sprachniveau B1 bis A2 umschreiben sollst. 
+Du bekommst einen schwer verständlichen Text, den du vollständig in Einfache Sprache auf Sprachniveau B1 bis A2 umschreiben sollst.
 
 Beachte folgende Regeln:
 
 {completeness}
 {rules}
 
-Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar. 
+Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar.
 Formatiere nie in Markdown oder HTML.
 
 Hier ist der schwer verständliche Text:
@@ -156,14 +163,14 @@ Hier ist der schwer verständliche Text:
 
 
 OPENAI_TEMPLATE_LS = """
-Du bekommst einen schwer verständlichen Text, den du vollständig in Leichte Sprache auf Sprachniveau A2 bis A1 umschreiben sollst. 
+Du bekommst einen schwer verständlichen Text, den du vollständig in Leichte Sprache auf Sprachniveau A2 bis A1 umschreiben sollst.
 
 Beachte folgende Regeln:
 
 {completeness}
 {rules}
 
-Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar. 
+Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar.
 Formatiere nie in Markdown oder HTML.
 
 Hier ist der schwer verständliche Text:
@@ -175,7 +182,7 @@ Hier ist der schwer verständliche Text:
 
 
 OPENAI_TEMPLATE_ANALYSIS_EASIER = """
-Du bekommst einen schwer verständlichen Text, den du genau analysieren sollst. 
+Du bekommst einen schwer verständlichen Text, den du genau analysieren sollst.
 
 Analysiere den schwer verständlichen Text Satz für Satz. Beschreibe genau und detailliert, was sprachlich unverständlich ist bei jedem Satz. Analysiere was ich tun müsste, damit der Text verständlicher wird und Menschen diesen leicht vestehen können. Gehe bei deiner Analyse Schritt für Schritt vor. 
 
@@ -183,13 +190,13 @@ Analysiere den schwer verständlichen Text Satz für Satz. Beschreibe genau und 
 2. Analysiere den Satz auf seine Verständlichkeit. Was muss ich tun, damit der Satz verständlicher wird? 
 3. Mache einen Vorschlag für einen leicht verständlichen Satz. 
 
-Befolge diesen Ablauf von Anfang bis Ende, auch wenn der schwer verständliche Text sehr lang ist. 
+Befolge diesen Ablauf von Anfang bis Ende, auch wenn der schwer verständliche Text sehr lang ist.
 
 Die Regeln für verständlicheren Text sind diese hier:
 
 {rules}
 
-Gib nur deine Analyse aus, ohne Einleitung oder Kommentar. 
+Gib nur deine Analyse aus, ohne Einleitung oder Kommentar.
 Formatiere nie in Markdown oder HTML.
 
 Hier ist der schwer verständliche Text:
@@ -201,7 +208,7 @@ Hier ist der schwer verständliche Text:
 
 
 OPENAI_TEMPLATE_ANALYSIS_ES = """
-Du bekommst einen schwer verständlichen Text, den du genau analysieren sollst. 
+Du bekommst einen schwer verständlichen Text, den du genau analysieren sollst.
 
 Analysiere den schwer verständlichen Text Satz für Satz. Beschreibe genau und detailliert, was sprachlich nicht gut bei jedem Satz ist. Analysiere was ich tun müsste, damit der Text zu Einfacher Sprache (B1 bis A2) wird. Gib klare Hinweise, wie ich den Text besser verständlich machen kann. Gehe bei deiner Analyse Schritt für Schritt vor. 
 
@@ -209,13 +216,13 @@ Analysiere den schwer verständlichen Text Satz für Satz. Beschreibe genau und 
 2. Analysiere den Satz auf seine Verständlichkeit. Was muss ich tun, damit der Satz verständlicher wird? Wie kann ich den Satz in Einfacher Sprache, Sprachniveau B1 bis A2 besser formulieren?
 3. Mache einen Vorschlag für einen vereinfachten Satz. 
 
-Befolge diesen Ablauf von Anfang bis Ende, auch wenn der schwer verständliche Text sehr lang ist. 
+Befolge diesen Ablauf von Anfang bis Ende, auch wenn der schwer verständliche Text sehr lang ist.
 
 Die Regeln für Einfache Sprache sind diese hier:
 
 {rules}
 
-Gib nur deine Analyse aus, ohne Einleitung oder Kommentar. 
+Gib nur deine Analyse aus, ohne Einleitung oder Kommentar.
 Formatiere nie in Markdown oder HTML.
 
 Hier ist der schwer verständliche Text:
@@ -234,13 +241,13 @@ Analysiere den schwer verständlichen Text Satz für Satz. Beschreibe genau und 
 2. Analysiere den Satz auf seine Verständlichkeit. Was muss ich tun, damit der Satz verständlicher wird? Wie kann ich den Satz in Leichter Sprache, Sprachniveau A2 oder besser formulieren?
 3. Mache einen Vorschlag für einen vereinfachten Satz. 
 
-Befolge diesen Ablauf von Anfang bis Ende, auch wenn der schwer verständliche Text sehr lang ist. 
+Befolge diesen Ablauf von Anfang bis Ende, auch wenn der schwer verständliche Text sehr lang ist.
 
 Die Regeln für Leichte Sprache sind diese hier:
 
 {rules}
 
-Gib nur deine Analyse aus, ohne Einleitung oder Kommentar. 
+Gib nur deine Analyse aus, ohne Einleitung oder Kommentar.
 Formatiere nie in Markdown oder HTML.
 
 Hier ist der schwer verständliche Text:
