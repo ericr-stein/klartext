@@ -74,7 +74,7 @@ TEXT_AREA_HEIGHT = 600
 MAX_CHARS_INPUT = 10_000
 
 
-USER_WARNING = """Mit der KlartextZH-App kannst du Texte sprachlich vereinfachen. Dazu schicken wir deinen Text an den AFI KI-Server, den wir im Kanton betreiben. Du kannst daher auch vertrauliche Daten eingeben. Bitte beachte: KI-Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01. Die letzte Aktualisierung war am 24.3.2025."""
+USER_WARNING = """Mit der KlartextZH-App kannst du Texte sprachlich vereinfachen. Dazu schicken wir deinen Text an den AFI KI-Server, den wir im Kanton betreiben. Du kannst daher auch vertrauliche Daten eingeben. Bitte beachte: KI-Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01.1. Die letzte Aktualisierung war am 24.3.2025."""
 
 
 # Constants for the formatting of the Word document that can be downloaded.
