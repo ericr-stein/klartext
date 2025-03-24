@@ -7,6 +7,7 @@ import numpy as np
 import requests
 import os
 from datetime import datetime
+from openai import OpenAI
 
 from docx import Document
 from docx.shared import Pt, Inches
@@ -97,21 +98,22 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 @st.cache_resource
 def get_ollama_client(base_url=OLLAMA_HOST):
-    """Create a connection to the Ollama API.
+    """Create a connection to the Ollama API using OpenAI SDK.
 
     Args:
         base_url (str): URL of the Ollama service.
 
     Returns:
-        dict: Configuration for Ollama API calls.
+        OpenAI: Configured OpenAI client for Ollama.
     """
     try:
-        response = requests.get(f"{base_url}/api/version")
-        response.raise_for_status()
+        return OpenAI(
+            base_url=f"{base_url}/v1",
+            api_key="ollama"  # Required by OpenAI SDK
+        )
     except Exception as e:
         st.error(f"Verbindung zum AFI AI Server fehlgeschlagen: {str(e)}")
-
-    return {"base_url": base_url}
+        raise
 
 
 @st.cache_resource
@@ -205,67 +207,49 @@ def call_llm(
     model_name=MODEL_NAME,
     analysis=False,
 ):
-    """Call Ollama API for text generation."""
+    """Call Ollama API using OpenAI SDK for text generation."""
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
-
+    
     try:
-        ollama_client = get_ollama_client()
-
-        # Get the display name of the model from the model_name
+        client = get_ollama_client()
+        
+        # Get the display name of the model
         model_display_name = next(
             (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
         )
-
+        
         # Determine temperature based on model
         temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
-
-        # Use Ollama's native chat formatting
-        payload = {
-            "model": model_name,
-            "messages": [
+        
+        # Set timeout value
+        timeout_value = 180 if analysis else 60
+        
+        # Make the API call using OpenAI SDK
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
                 {"role": "system", "content": system},
-                {"role": "user", "content": final_prompt},
+                {"role": "user", "content": final_prompt}
             ],
-            "temperature": temp,
-            "num_predict": MAX_TOKENS,
-            "stream": False,
-        }
-
-        # Make the API call with longer timeout for analysis
-        timeout_value = (
-            180 if analysis else 60
-        )  # 3 minutes for analysis, 1 minute for simplification
-        response = requests.post(
-            f"{ollama_client['base_url']}/api/generate",
-            json=payload,
-            timeout=timeout_value,
+            temperature=temp,
+            max_tokens=MAX_TOKENS,
+            timeout=timeout_value
         )
-
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as http_err:
-            print(f"HTTP error: {http_err}")
-            return False, f"HTTP-Fehler: {http_err}"
-        except requests.exceptions.RequestException as req_err:
-            print(f"Request error: {req_err}")
-            return False, f"Anfragefehler: {req_err}"
-
-        result = response.json()
-
-        # Extract the response text
-        message = result.get("response", "")
+        
+        # Extract the response message
+        message = response.choices[0].message.content
         message = get_result_from_response(message)
         message = strip_markdown(message)
-
+        
         return True, message
-    except requests.exceptions.Timeout:
-        print(f"Timeout error: Request took longer than {timeout_value} seconds")
-        return (
-            False,
-            f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden.",
-        )
+        
     except Exception as e:
         print(f"Error: {e}")
+        if "timeout" in str(e).lower():
+            return (
+                False,
+                f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden."
+            )
         return False, str(e)
 
 
