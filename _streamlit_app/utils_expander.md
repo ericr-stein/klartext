@@ -1,11 +1,11 @@
-Mit dieser Applikation möchten wir Mitarbeitende der kantonalen Verwaltung dabei unterstützen, ihre Kommunikation noch verständlicher aufzubereiten.
+Mit dieser Applikation möchten wir Mitarbeitende dabei unterstützen, noch verständlicher zu kommunizieren.
 
 ## Wichtig
 
 - Die App ist ausschliesslich für Mitarbeitende der kantonalen Verwaltung.
 - Du darfst die App ausschliesslich für dienstliche Zwecke nutzen.
-- **Mit der App kannst du vertrauliche Informationen verarbeiten.**
-- **Die App speichert keine Texte und keine Ergebnisse. Alle Daten werden auf einem KI-Server beim AFI in einem eigenen Rechenzentrum *(on premise)* verarbeitet.**
+- **Mit der App kannst du öffentliche, interne und vertrauliche Daten / Informationen verarbeiten. Geheime Daten darfst du nicht in die App eingeben.**
+- **Die App speichert keine Texte und keine Ergebnisse. Alle Daten werden auf einem KI-Server beim AFI in einem eigenen kantonalen Rechenzentrum *(on premise)* verarbeitet.**
 - Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig.
 
 ## Was macht diese App?
@@ -24,7 +24,7 @@ Die App bietet dir drei verschiedene Grade der Vereinfachung:
 
 ### Was sind die verschiedenen Sprachmodelle?
 
-Momentan kannst du eins von 4 Sprachmodellen wählen:
+Momentan kannst du eins von 5 Sprachmodellen wählen:
 
 - [Llama 3.1 Nemotron](https://huggingface.co/nvidia/Llama-3.1-Nemotron-70B-Instruct)
 - [Llama 3.3](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct)
@@ -32,7 +32,7 @@ Momentan kannst du eins von 4 Sprachmodellen wählen:
 - [Gemma 2](https://huggingface.co/google/gemma-2-27b)
 - [Phi-4](https://huggingface.co/microsoft/phi-4)
 
-Alle Modelle analysieren und schreiben unterschiedlich und sind alle einen Versuch wert.
+Alle Modelle analysieren und schreiben unterschiedlich und sind alle einen Versuch wert. Llama 3.1 Nemotron ist voreingestellt, da es nach unseren Tests rundum die besten Ergebnisse bringt. 
 
 ### Wie funktioniert die Bewertung der Verständlichkeit?
 
