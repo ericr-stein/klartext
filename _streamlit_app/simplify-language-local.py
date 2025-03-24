@@ -19,6 +19,7 @@ from utils_prompts import (
     SYSTEM_MESSAGE_EASIER,
     SYSTEM_MESSAGE_ES,
     SYSTEM_MESSAGE_LS,
+    SYSTEM_MESSAGE_ANALYSIS,
     RULES_EASIER,
     RULES_ES,
     RULES_LS,
@@ -26,9 +27,7 @@ from utils_prompts import (
     OPENAI_TEMPLATE_EASIER,
     OPENAI_TEMPLATE_ES,
     OPENAI_TEMPLATE_LS,
-    OPENAI_TEMPLATE_ANALYSIS_EASIER,
-    OPENAI_TEMPLATE_ANALYSIS_ES,
-    OPENAI_TEMPLATE_ANALYSIS_LS,
+    OPENAI_TEMPLATE_ANALYSIS_GENERIC,
 )
 
 import streamlit as st
@@ -39,9 +38,7 @@ OPENAI_TEMPLATES = [
     OPENAI_TEMPLATE_EASIER,
     OPENAI_TEMPLATE_ES,
     OPENAI_TEMPLATE_LS,
-    OPENAI_TEMPLATE_ANALYSIS_EASIER,
-    OPENAI_TEMPLATE_ANALYSIS_ES,
-    OPENAI_TEMPLATE_ANALYSIS_LS,
+    OPENAI_TEMPLATE_ANALYSIS_GENERIC,
 ]
 
 # Constants
@@ -54,18 +51,20 @@ MODEL_OPTIONS = {
     # "Llama 3.3": "hf.co/unsloth/Llama-3.3-70B-Instruct-GGUF:Q5_K_M",
 }
 
-# Model-specific temperature settings
-MODEL_TEMPERATURES = {
-    "Gemma 3": 1.0,
-    "default": 0.5,  # Used for all other models
-}
+# # Model-specific temperature settings
+# MODEL_TEMPERATURES = {
+#     "Gemma 3": 1.0,
+#     "default": 0.5,  # Used for all other models
+# }
+
+TEMPERATURE = 0.2
 
 # Default model to use if none is selected
 MODEL_NAME = MODEL_OPTIONS["Phi-4"]  # Default to Llama Nemotron
 
 # Get Ollama host from environment variable or use default
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-MAX_TOKENS = 8192
+MAX_TOKENS = 2048
 
 # Height of the text areas for input and output.
 TEXT_AREA_HEIGHT = 600
@@ -170,9 +169,7 @@ def create_prompt(
     prompt_easy,
     prompt_es,
     prompt_ls,
-    analysis_easy,
-    analysis_es,
-    analysis_ls,
+    analysis_generic,
     analysis,
 ):
     """Create prompt and system message according the app settings."""
@@ -182,25 +179,26 @@ def create_prompt(
         final_prompt = prompt_easy.format(
             completeness=completeness, rules=RULES_EASIER, prompt=text
         )
-        if analysis:
-            final_prompt = analysis_easy.format(
-                completeness=completeness, rules=RULES_EASIER, prompt=text
-            )
         system = SYSTEM_MESSAGE_EASIER
+        if analysis:
+            final_prompt = analysis_generic.format(prompt=text)
+            system = SYSTEM_MESSAGE_ANALYSIS
     elif simplification_level == "Einfache Sprache":
         final_prompt = prompt_es.format(
             completeness=completeness, rules=RULES_ES, prompt=text
         )
-        if analysis:
-            final_prompt = analysis_es.format(rules=RULES_ES, prompt=text)
         system = SYSTEM_MESSAGE_ES
+        if analysis:
+            final_prompt = analysis_generic.format(prompt=text)
+        system = SYSTEM_MESSAGE_ANALYSIS
     else:
         final_prompt = prompt_ls.format(
             completeness=completeness, rules=RULES_LS, prompt=text
         )
-        if analysis:
-            final_prompt = analysis_ls.format(rules=RULES_LS, prompt=text)
         system = SYSTEM_MESSAGE_LS
+        if analysis:
+            final_prompt = analysis_generic.format(prompt=text)
+        system = SYSTEM_MESSAGE_ANALYSIS
     return final_prompt, system
 
 
@@ -212,17 +210,18 @@ def call_llm(
     """Call Ollama API using OpenAI SDK for text generation."""
     text = text.strip()
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
+    # print(final_prompt)
 
     try:
         client = get_ollama_client()
+        print(client)
+        # # Get the display name of the model
+        # model_display_name = next(
+        #     (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
+        # )
 
-        # Get the display name of the model
-        model_display_name = next(
-            (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
-        )
-
-        # Determine temperature based on model
-        temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
+        # # Determine temperature based on model
+        # temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
 
         # Set timeout value
         timeout_value = 180 if analysis else 60
@@ -234,15 +233,15 @@ def call_llm(
                 {"role": "system", "content": system},
                 {"role": "user", "content": final_prompt},
             ],
-            temperature=temp,
+            temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,
             timeout=timeout_value,
         )
-
+        print(response)
         # Extract the response message
         message = response.choices[0].message.content
         # message = get_result_from_response(message)
-        # message = strip_markdown(message)
+        message = strip_markdown(message)
 
         return True, message
 
@@ -393,7 +392,8 @@ project_info = get_project_info()
 if "key_textinput" not in st.session_state:
     st.session_state.key_textinput = ""
 
-st.markdown("## 🙋‍♀️ KlartextZH - Sprache einfach vereinfachen")
+cols = st.columns([1, 7])
+st.markdown("## 🙋‍♀️ KlartextZH - Sprache einfach vereinfachen", unsafe_allow_html=True)
 create_project_info(project_info)
 st.caption(USER_WARNING, unsafe_allow_html=True)
 st.markdown("---")

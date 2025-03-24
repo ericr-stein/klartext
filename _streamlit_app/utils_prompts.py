@@ -43,7 +43,6 @@ Gib keine Markdown-Formatierung und kein HTML aus.
 SYSTEM_MESSAGE_ANALYSIS = """
 Du bist ein hilfreicher Assistent, der Texte analysiert und erklärt, wie man diese verständlicher formulieren kann. 
 Du erhältst einen schwer verständlichen Text und wirst diesen Satz für Satz analysieren.
-Du beschreibst dann genau und detailliert, was sprachlich unverständlich ist bei jedem Satz. Du machst Vorschläge, was man tun müsste, damit der Text verständlicher wird und Menschen diesen leicht verstehen können.
 """.strip()
 
 
@@ -171,6 +170,37 @@ Beachte folgende Regeln:
 {rules}
 
 Gib nur den vereinfachten Text aus, ohne Einleitung oder Kommentar.
+Formatiere nie in Markdown oder HTML.
+
+Hier ist der schwer verständliche Text:
+
+--------------------------------------------------------------------------------
+
+{prompt}
+""".strip()
+
+
+OPENAI_TEMPLATE_ANALYSIS_GENERIC = """
+Du bekommst einen schwer verständlichen Text, den du genau analysieren sollst.
+
+Analysiere den schwer verständlichen Text Satz für Satz. Beschreibe genau und detailliert, was sprachlich unverständlich ist bei jedem Satz. Analysiere was ich tun müsste, damit der Text verständlicher wird und Menschen diesen leicht vestehen können. Gehe bei deiner Analyse Schritt für Schritt vor. 
+
+1. Wiederhole den Satz. 
+2. Analysiere den Satz auf seine Verständlichkeit. Was muss ich tun, damit der Satz verständlicher wird? 
+3. Mache einen Vorschlag für einen leicht verständlichen Satz. 
+
+Befolge diesen Ablauf von Anfang bis Ende, auch wenn der schwer verständliche Text sehr lang ist.
+
+Die Regeln für verständlicheren Text sind diese hier:
+
+- Kurze, einfache Sätze.
+- Text gliedern mit Absätzen für bessere Lesbarkeit.
+- Fremdwörter, Fachausdrücke und Amtsdeutsch vermeiden.
+- Keine Füllwörter und Abkürzungen.
+- Verben statt Nomen und aktive statt passive Formulierungen.
+- Einfache, direkte Sprache, ohne Substantivierungen.
+
+Gib nur deine Analyse aus, ohne Einleitung oder Kommentar.
 Formatiere nie in Markdown oder HTML.
 
 Hier ist der schwer verständliche Text:

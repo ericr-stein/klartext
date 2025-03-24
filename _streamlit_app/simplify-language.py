@@ -26,9 +26,7 @@ from utils_prompts import (
     OPENAI_TEMPLATE_EASIER,
     OPENAI_TEMPLATE_ES,
     OPENAI_TEMPLATE_LS,
-    OPENAI_TEMPLATE_ANALYSIS_EASIER,
-    OPENAI_TEMPLATE_ANALYSIS_ES,
-    OPENAI_TEMPLATE_ANALYSIS_LS,
+    OPENAI_TEMPLATE_ANALYSIS_GENERIC,
 )
 
 import streamlit as st
@@ -39,9 +37,7 @@ OPENAI_TEMPLATES = [
     OPENAI_TEMPLATE_EASIER,
     OPENAI_TEMPLATE_ES,
     OPENAI_TEMPLATE_LS,
-    OPENAI_TEMPLATE_ANALYSIS_EASIER,
-    OPENAI_TEMPLATE_ANALYSIS_ES,
-    OPENAI_TEMPLATE_ANALYSIS_LS,
+    OPENAI_TEMPLATE_ANALYSIS_GENERIC,
 ]
 
 # Constants
@@ -53,18 +49,20 @@ MODEL_OPTIONS = {
     "Llama 3.3": "hf.co/unsloth/Llama-3.3-70B-Instruct-GGUF:Q5_K_M",
 }
 
-# Model-specific temperature settings
-MODEL_TEMPERATURES = {
-    "Gemma 3": 1.0,
-    "default": 0.5,  # Used for all other models
-}
+# # Model-specific temperature settings
+# MODEL_TEMPERATURES = {
+#     # "Gemma 3": 1.0,
+#     "default": 0.5,  # Used for all other models
+# }
+
+TEMPERATURE = 0.2
 
 # Default model to use if none is selected
 MODEL_NAME = MODEL_OPTIONS["Llama Nemotron"]  # Default to Llama Nemotron
 
 # Get Ollama host from environment variable or use default
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
-MAX_TOKENS = 8192
+MAX_TOKENS = 2048
 
 # Height of the text areas for input and output.
 TEXT_AREA_HEIGHT = 600
@@ -72,10 +70,10 @@ TEXT_AREA_HEIGHT = 600
 # Maximum number of characters for the input text.
 # This is way below the context window sizes of the models.
 # We can increase this. However, we found that users can work and validate better when we nudge to work with shorter texts.
-MAX_CHARS_INPUT = 10_000
+MAX_CHARS_INPUT = 5_000
 
 
-USER_WARNING = """Mit der KlartextZH-App kannst du Texte sprachlich vereinfachen. Dazu schicken wir deinen Text an einen AFI KI-Server, den wir im Kanton betreiben. Du kannst daher auch vertrauliche Daten eingeben. Bitte beachte: KI-Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v.01.3. Die letzte Aktualisierung war am 24.3.2025."""
+USER_WARNING = """Mit der KlartextZH-App kannst du Texte sprachlich vereinfachen. Dazu schicken wir deinen Text an einen AFI KI-Server, den wir im Kanton betreiben. Du kannst daher auch vertrauliche Daten eingeben. Bitte beachte: KI-Sprachmodelle machen Fehler. Die App liefert lediglich einen Entwurf. Überprüfe das Ergebnis immer und passe es an, wenn nötig. Gib uns jederzeit [Feedback](mailto:patrick.arnecke@statistik.ji.zh.ch). 🚀 Aktuelle App-Version ist v01.3.1 Die letzte Aktualisierung war am 24.3.2025."""
 
 
 # Constants for the formatting of the Word document that can be downloaded.
@@ -169,9 +167,7 @@ def create_prompt(
     prompt_easy,
     prompt_es,
     prompt_ls,
-    analysis_easy,
-    analysis_es,
-    analysis_ls,
+    analysis_generic,
     analysis,
 ):
     """Create prompt and system message according the app settings."""
@@ -183,9 +179,7 @@ def create_prompt(
         )
         system = SYSTEM_MESSAGE_EASIER
         if analysis:
-            final_prompt = analysis_easy.format(
-                completeness=completeness, rules=RULES_EASIER, prompt=text
-            )
+            final_prompt = analysis_generic.format(prompt=text)
             system = SYSTEM_MESSAGE_ANALYSIS
     elif simplification_level == "Einfache Sprache":
         final_prompt = prompt_es.format(
@@ -193,7 +187,7 @@ def create_prompt(
         )
         system = SYSTEM_MESSAGE_ES
         if analysis:
-            final_prompt = analysis_es.format(rules=RULES_ES, prompt=text)
+            final_prompt = analysis_generic.format(prompt=text)
         system = SYSTEM_MESSAGE_ANALYSIS
     else:
         final_prompt = prompt_ls.format(
@@ -201,7 +195,7 @@ def create_prompt(
         )
         system = SYSTEM_MESSAGE_LS
         if analysis:
-            final_prompt = analysis_ls.format(rules=RULES_LS, prompt=text)
+            final_prompt = analysis_generic.format(prompt=text)
         system = SYSTEM_MESSAGE_ANALYSIS
     return final_prompt, system
 
@@ -218,13 +212,13 @@ def call_llm(
     try:
         client = get_ollama_client()
 
-        # Get the display name of the model
-        model_display_name = next(
-            (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
-        )
+        # # Get the display name of the model
+        # model_display_name = next(
+        #     (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
+        # )
 
-        # Determine temperature based on model
-        temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
+        # # Determine temperature based on model
+        # temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
 
         # Set timeout value
         timeout_value = 180 if analysis else 60
@@ -236,7 +230,7 @@ def call_llm(
                 {"role": "system", "content": system},
                 {"role": "user", "content": final_prompt},
             ],
-            # temperature=temp,
+            temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,
             timeout=timeout_value,
         )
