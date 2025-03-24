@@ -241,7 +241,15 @@ def call_llm(
             timeout=timeout_value,
         )
 
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as http_err:
+            print(f"HTTP error: {http_err}")
+            return False, f"HTTP-Fehler: {http_err}"
+        except requests.exceptions.RequestException as req_err:
+            print(f"Request error: {req_err}")
+            return False, f"Anfragefehler: {req_err}"
+
         result = response.json()
 
         # Extract the response text
