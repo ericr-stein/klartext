@@ -239,8 +239,8 @@ def call_llm(
 
         # Extract the response message
         message = response.choices[0].message.content
-        message = get_result_from_response(message)
-        message = strip_markdown(message)
+        # message = get_result_from_response(message)
+        # message = strip_markdown(message)
 
         return True, message
 
