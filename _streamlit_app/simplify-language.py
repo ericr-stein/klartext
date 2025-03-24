@@ -109,7 +109,7 @@ def get_ollama_client(base_url=OLLAMA_HOST):
     try:
         return OpenAI(
             base_url=f"{base_url}/v1",
-            api_key="ollama"  # Required by OpenAI SDK
+            api_key="ollama",  # Required by OpenAI SDK
         )
     except Exception as e:
         st.error(f"Verbindung zum AFI AI Server fehlgeschlagen: {str(e)}")
@@ -210,46 +210,46 @@ def call_llm(
     """Call Ollama API using OpenAI SDK for text generation."""
     text = text.strip()
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
-    
+
     try:
         client = get_ollama_client()
-        
+
         # Get the display name of the model
         model_display_name = next(
             (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
         )
-        
+
         # Determine temperature based on model
         temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
-        
+
         # Set timeout value
         timeout_value = 180 if analysis else 60
-        
+
         # Make the API call using OpenAI SDK
         response = client.chat.completions.create(
             model=model_name,
             messages=[
                 {"role": "system", "content": system},
-                {"role": "user", "content": final_prompt}
+                {"role": "user", "content": final_prompt},
             ],
             temperature=temp,
             max_tokens=MAX_TOKENS,
-            timeout=timeout_value
+            timeout=timeout_value,
         )
-        
+
         # Extract the response message
         message = response.choices[0].message.content
         message = get_result_from_response(message)
         message = strip_markdown(message)
-        
+
         return True, message
-        
+
     except Exception as e:
         print(f"Error: {e}")
         if "timeout" in str(e).lower():
             return (
                 False,
-                f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden."
+                f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden.",
             )
         return False, str(e)
 
@@ -263,12 +263,14 @@ def get_result_from_response(response):
     else:
         tag = "leichtesprache"
     result = re.findall(rf"<{tag}>(.*?)</{tag}>", response, re.DOTALL)
-    
+
     # Handle case when no matching tags are found
     if not result:
-        print(f"Warning: Response was not properly formatted between <{tag}> tags. Just returning the whole response.")
+        print(
+            f"Warning: Response was not properly formatted between <{tag}> tags. Just returning the whole response."
+        )
         return response.strip()
-    
+
     return "\n".join(result).strip()
 
 
