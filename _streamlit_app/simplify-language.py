@@ -278,6 +278,12 @@ def get_result_from_response(response):
     else:
         tag = "leichtesprache"
     result = re.findall(rf"<{tag}>(.*?)</{tag}>", response, re.DOTALL)
+    
+    # Handle case when no matching tags are found
+    if not result:
+        print(f"Warning: Response was not properly formatted between <{tag}> tags. Just returning the whole response.")
+        return response.strip()
+    
     return "\n".join(result).strip()
 
 
