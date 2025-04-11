@@ -17,3 +17,5 @@ llama-cpp-python
 
 streamlit
 streamlit-extras
+
+prometheus-client # <--- ADD THIS LINE

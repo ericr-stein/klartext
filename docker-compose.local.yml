@@ -9,7 +9,7 @@ services:
       - ./_streamlit_app:/app/_streamlit_app
     environment:
       - OLLAMA_HOST=http://host.docker.internal:11434
-      #- METRICS_PORT=8000
+      - METRICS_PORT=8000 # <--- UNCOMMENTED
     ports:
       - "8501:8501"
       - "8000:8000"

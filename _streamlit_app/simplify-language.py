@@ -44,10 +44,11 @@ OPENAI_TEMPLATES = [
 MODEL_OPTIONS = {
     "Gemma 3": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
     "Gemma 2": "gemma2:27b-instruct-q5_K_M",
-    "Phi-4": "hf.co/unsloth/phi-4-GGUF:Q8_0",
+    "Phi-4 (vLLM)": "microsoft/phi-4", # Added vLLM option
     "Llama Nemotron": "nemotron:70b-instruct-q5_K_M",
     "Llama 3.3": "hf.co/unsloth/Llama-3.3-70B-Instruct-GGUF:Q5_K_M",
 }
+DEFAULT_MODEL_IDENTIFIER = "microsoft/phi-4" # Define default model by identifier
 
 # # Model-specific temperature settings
 # MODEL_TEMPERATURES = {
@@ -57,8 +58,7 @@ MODEL_OPTIONS = {
 
 TEMPERATURE = 0.2
 
-# Default model to use if none is selected
-MODEL_NAME = MODEL_OPTIONS["Llama Nemotron"]  # Default to Llama Nemotron
+# MODEL_NAME is now assigned dynamically based on user selection (see below)
 
 # Get Ollama host from environment variable or use default
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
@@ -96,22 +96,31 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 @st.cache_resource
-def get_ollama_client(base_url=OLLAMA_HOST):
-    """Create a connection to the Ollama API using OpenAI SDK.
+def get_llm_client(model_name):
+    """Create a connection to the LLM API (Ollama or vLLM) using OpenAI SDK.
 
     Args:
-        base_url (str): URL of the Ollama service.
+        model_name (str): The identifier of the model being used.
 
     Returns:
-        OpenAI: Configured OpenAI client for Ollama.
+        OpenAI: Configured OpenAI client.
     """
     try:
+        if model_name == "microsoft/phi-4":
+            # Use vLLM endpoint
+            base_url = f"{os.environ.get('VLLM_HOST', 'http://vllm:8000')}/v1"
+            api_key = "nokey" # vLLM might not need an API key
+        else:
+            # Use Ollama endpoint
+            base_url = f"{os.environ.get('OLLAMA_HOST', 'http://ollama:11434')}/v1"
+            api_key = "ollama" # Required by OpenAI SDK for Ollama
+
         return OpenAI(
-            base_url=f"{base_url}/v1",
-            api_key="ollama",  # Required by OpenAI SDK
+            base_url=base_url,
+            api_key=api_key,
         )
     except Exception as e:
-        st.error(f"Verbindung zum AFI AI Server fehlgeschlagen: {str(e)}")
+        st.error(f"Verbindung zum LLM Server fehlgeschlagen: {str(e)}")
         raise
 
 
@@ -210,7 +219,7 @@ def call_llm(
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
 
     try:
-        client = get_ollama_client()
+        client = get_llm_client(model_name) # Pass model_name to get correct client
 
         # # Get the display name of the model
         # model_display_name = next(
@@ -427,10 +436,25 @@ with button_cols[2]:
 
 with button_cols[3]:
     # Model selection
+    # Find the key (display name) and index for the default model identifier
+    model_keys = list(MODEL_OPTIONS.keys())
+    default_model_key = None
+    default_index = 0 # Default to first model if not found
+    for i, key in enumerate(model_keys):
+        if MODEL_OPTIONS[key] == DEFAULT_MODEL_IDENTIFIER:
+            default_model_key = key
+            default_index = i
+            break
+
+    if default_model_key is None:
+         st.warning(f"Default model identifier '{DEFAULT_MODEL_IDENTIFIER}' not found in MODEL_OPTIONS values. Falling back to the first model.")
+         # default_index is already 0
+
+    # Model selection
     selected_model_key = st.radio(
         "Modell:",
-        options=list(MODEL_OPTIONS.keys()),
-        index=3,  # Default to Llama Nemotron
+        options=model_keys, # Use the calculated keys
+        index=default_index, # Use the calculated index
         help="Wähle das Modell, das für die Vereinfachung verwendet werden soll. Jedes Modell schreibt unterschiedlich. Alle Modelle sind von uns getestet und einen Versuch wert.",
     )
     # Get the actual model name for API calls
@@ -470,8 +494,7 @@ with placeholder_analysis:
     )
 
 
-# Get Ollama client
-ollama_client = get_ollama_client()
+# Client is now fetched dynamically within call_llm based on selected model
 
 # Start processing if one of the processing buttons is clicked.
 if do_simplification or do_analysis:
