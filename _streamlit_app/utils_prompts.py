@@ -80,11 +80,8 @@ RULES_ES = """
 
 RULES_LS = """
 - Schreibe wichtiges zuerst: Beginne den Text mit den wichtigsten Informationen, so dass diese sofort klar werden.
-- Verwende aktive Sprache anstelle von Passiv.
-- Verwende einfache, kurze, häufig gebräuchliche Wörter.
-
-
-- Löse zusammengesetzte Wörter auf und formuliere sie neu.
+- Verwende einfache, kurze, häufig gebräuchliche Wörter. 
+- Löse zusammengesetzte Wörter auf und formuliere sie neu. 
 - Wenn es wichtige Gründe gibt, ein zusammengesetztes Wort nicht aufzulösen, trenne das zusammengesetzte Wort mit einem Bindestrich. Beginne dann jedes Wort mit einem Grossbuchstaben. Beispiele: «Auto-Service», «Gegen-Argument», «Kinder-Betreuung», «Volks-Abstimmung».
 - Vermeide Fremdwörter. Wähle stattdessen einfache, allgemein bekannte Wörter. Erkläre Fremdwörter, wenn sie unvermeidbar sind. 
 - Vermeide Fachbegriffe. Wähle stattdessen einfache, allgemein bekannte Wörter. Erkläre Fachbegriffe, wenn sie unvermeidbar sind.
