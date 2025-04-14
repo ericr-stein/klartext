@@ -4,7 +4,6 @@ import base64
 import io
 import logging
 import numpy as np
-import requests
 import os
 from datetime import datetime
 from openai import OpenAI

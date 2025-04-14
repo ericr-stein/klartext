@@ -1,6 +1,6 @@
 # KlartextZH – Language Simplification App
 
-Production code and quality evaluations for KlartextZH, the **Language Simplification App of the Cantonal Administration**.
+**Production code for KlartextZH**, the **Language Simplification App of the Cantonal Administration**.
 
 ## Installation
 
@@ -28,7 +28,7 @@ scrape_configs:
     - targets: ['localhost:8000']
 ```
 
-## Observations from Log Data
+## Observations from Log Data of the Prototype App
 
 The following observations were derived from the log data of the prototype app, which has been operational since **December 14, 2023**. The following analysis covers all interactions until 25th of January 2025.
 
@@ -60,85 +60,3 @@ The following observations were derived from the log data of the prototype app, 
 3. **Optimize for difficult input texts**: The mayority of input texts are really hard to understand (CEFR C1 or worse).
 3. **Emphasize Simplification:** Text simplification is the main use case, with text *analysis* being secondary.
 4. **Prioritize Fast Response Times:** Aim to maintain **4-5 seconds on average** with a **maximum of 10-12 seconds**, as achieved in the prototype app. To improve perceived performance we also can **stream output**. This hasn't been a feature in the prototype app yet but might be a big plus from a users perspective.
-
-## Evaluate OSS LLMs
-
-We need to select an **Open Weights LLM** suitable for our text simplification service. Below are the evaluation criteria and the current shortlist.
-
-### Base Requirements
-
-1. **Commercially Viable License:** Must have a license like MIT, Apache, etc.
-2. **German Language Support:** The model should work effectively with German texts.
-3. **Resource Compatibility:** Must fit within available server RAM/VRAM.
-4. **Performance:** Should meet performance expectations (tokens per second) for our use case.
-
-**Note:** Context size is not critical as most user texts are short and input can be limited. Prompts average **1.5k tokens**.
-
-### Evaluation Criteria
-
-1. **General vibe**.
-2. **Human Expert Feedback:** E.g. assessments by experts from ZHweb-Team or Comm-Team StVA.
-3. **Prompt Compatibility:** Should work with existing prompts, though adaptations are acceptable.
-4. **Simplification Modes:** Should produce good results in the three simplification modes:
-   - "Einfache Sprache" (our main focus)
-   - "Verständlichere Sprache"
-   - "Leichte Sprache"
-5. **Reliability:** Consistent outputs, such as:
-   - Proper XML tags (important since JSON often fails with embedded quotes).
-   - Adherence to German (no foreign language interspersed) and German language standards, including grammar and syntax.
-6. **Improved Understandability:** Demonstrable improvement in understandability measured using our **ZIX score**.
-7. **Accuracy:** Minimal factual errors or hallucinations. Evaluated using LLM judgment aligned with human preferences.
-
-**Note:** Completeness is less critical. We recognize that some factual simplification is inherent to language simplification and may trade off with completeness. We may add a feature that tells the user, what parts of the content were omitted in the simplified text version (this is an actual backlog item for our prototype app).
-
-### Current Shortlist
-
-The candidates under consideration are these:
-
-- [Phi4 14B (Q6_K_L)](https://huggingface.co/bartowski/phi-4-GGUF)
-- [Phi4 14B Unsloth (Q5_K_M)](https://huggingface.co/unsloth/phi-4-GGUF)
-- [Llama 3.1 SauerkrautLM 70B (Q5_K_M)](https://huggingface.co/mradermacher/Llama-3.1-SauerkrautLM-70b-Instruct-GGUF)
-- [Llama 3.1 Nemotron 70B (Q5_K_M)](https://huggingface.co/bartowski/Llama-3.1-Nemotron-70B-Instruct-HF-GGUF)
-- [Llama 3.2 3B](https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF)
-- [Llama 3.3 70B (Q5_K_M)](https://huggingface.co/bartowski/Llama-3.3-70B-Instruct-GGUF)
-- [Gemma 2 27B (Q5_K_M)](https://huggingface.co/bartowski/gemma-2-27b-it-GGUF)
-- [Gemma 3 27B (Q5_K_M and Q6_k)](https://huggingface.co/unsloth/gemma-3-27b-it-GGUF)
-- [Qwen 2.5 32B (Q5_K-M)](https://huggingface.co/bartowski/Qwen2.5-32B-Instruct-GGUF)
-- [Qwen 2.5 72B (Q5_K-M)](https://huggingface.co/bartowski/EVA-Qwen2.5-72B-v0.2-GGUF)
-- [Mistral Small v3 24B](https://huggingface.co/mistralai/Mistral-Small-24B-Instruct-2501)
-
-Reasoning models
-
-- [QwQ 32B (Q5_K-M)](https://huggingface.co/unsloth/QwQ-32B-GGUF)
-- [Deepseek R1 Distill Llama 8B (Q5_K-M)](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF)
-- [Deepseek R1 Distill Llama 70B (Q4_K-M)](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Llama-70B-GGUF)
-
-**Quantization Considerations:** The **degree of quantization** has to be discussed too. **Q4 and Q5** appears to offer an optimal balance between performance and resource efficiency.
-
-### Finetuning
-
-While we may explore **finetuning** in the future, our current focus is on **identifying a strong base model** and establishing a **robust evaluation pipeline**. Finetuning will be pursued if necessary.
-
-### Creating a Test Set
-
-- We selected 40 representative input texts from actual user inputs.
-- We added 10 additional texts mainly from our website.
-- The samples have a length between 27 and 259 words (median 111).
-- The samples have a ZIX score between -10 and -0.2.
-- The CEFR levels are C2 (25), C1 (18) and B2 (7).
-
-### Results
-
-**The best models overall are:**
-
-- **Llama 3.1 Nemotron 70B (Q5_K_M)**
-- **Llama 3.1 SauerkrautLM 70B (Q5_K_M)**
-- **Gemma 2 27B (Q5_K_M)**
-- **Gemma 3 27B (Q6_k)**
-- **Phi-4 Unsloth 14B (Q5_K_M)**
-
-**Llama 3.3 70B (Q5_K_M) yields the best results for Leichte Sprache.**
-
-All other models yield less good results. We do not recommend these for our use case.
-
-Proprietary models like GPT-4o and Claude Sonnet v3.5 outperfom all open source models in the vibe check. They are also very good in terms of understandability and in the top group of models considering the wide confidence interval of our correctness measurements. The good news here is, that our best OSS models are not far behind.
