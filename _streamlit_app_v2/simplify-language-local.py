@@ -33,13 +33,13 @@ from utils_prompts import (
 DEFAULT_SYSTEM_MESSAGE = SYSTEM_MESSAGE_VS
 
 MODEL_OPTIONS = {
-    "Phi-4 KTZH": "hf.co/matterhorn/phi4-v4_o3_settings:Q8_0",
-    "Gemma 3": "gemma3:1b-it-qat",
+    "Phi-4 KTZH": "hf.co/matterhorn/Phi-4_KTZH_250422_v1:latest",
+    "Gemma 3": "gemma3:27b-it-qat",
 }
 
 # Model-specific temperature settings
 MODEL_TEMPERATURES = {
-    "Gemma 3": 1.0,
+    "Gemma 3": 0.5,
     "Phi-4 KTZH": 0.5,
 }
 
