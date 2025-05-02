@@ -27,7 +27,8 @@ scrape_configs:
 - Start Prometheus: `prometheus --config.file=prometheus.yml``
 
 - Install Grafana
-- Set up Grafana to use Prometheus as a data source. The default server URL is `http://localhost:9090`.
+- Set up Grafana to use Prometheus as a data source. The default server URL of Prometheus is `http://localhost:9090`.
+- Go to Grafanas Web UI at `http://localhost:3000`.
 - Create a dashboard with panels for:
   - Request counts by operation/model
   - Processing times
