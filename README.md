@@ -10,30 +10,32 @@
 
 ## Setup Logging
 
-### Configure Prometheus
+### Set up Prometheus
 
 - Create `prometheus.yml`
 
 ```
-global:
-  scrape_interval: 5s  # Scrape metrics every 5 seconds
+    global:
+      scrape_interval: 5s  # Scrape metrics every 5 seconds
 
-scrape_configs:
-  - job_name: 'python_app'
-    static_configs:
-      - targets: ['localhost:8000']
+    scrape_configs:
+      - job_name: 'python_app'
+        static_configs:
+          - targets: ['localhost:8000']
 ```
 
-- Start Prometheus: `prometheus --config.file=prometheus.yml``
+- Start Prometheus: `prometheus --config.file=prometheus.yml`
 
-- Install Grafana
-- Set up Grafana to use Prometheus as a data source. The default server URL of Prometheus is `http://localhost:9090`.
-- Go to Grafanas Web UI at `http://localhost:3000`.
+### Set up Grafana
+
+- [Install Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/installation/), .e.g with `brew` on MacOS or `apt` on Linux.
+- Set up Grafana to use Prometheus as a data source. - Go to Grafanas Web UI at `http://localhost:3000`, create a data source and set the server URL for Prometheus to `http://localhost:9090` (equivalent to the config created above).
 - Create a dashboard with panels for:
   - Request counts by operation/model
   - Processing times
   - Text complexity before/after
   - Input/output word counts
+  - etc.
 
 ## Observations from Log Data of the Prototype App
 

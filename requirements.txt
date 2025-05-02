@@ -8,3 +8,4 @@ openai
 tiktoken
 streamlit
 streamlit-extras
+prometheus-client
