@@ -16,11 +16,9 @@ import os
 from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
-
 from docx import Document
 from docx.shared import Pt, Inches
 from zix.understandability import get_zix, get_cefr
-
 from metrics import track_metrics
 from utils_prompts import (
     SYSTEM_MESSAGE_VS,
@@ -29,20 +27,12 @@ from utils_prompts import (
     ADDITION_GEMMA,
 )
 
-# set logging to app log file and append
 logging.basicConfig(
     filename="app.log",
     level=logging.INFO,
     format="%(asctime)s\t%(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-# Set up logging to console
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(
-    logging.Formatter("%(asctime)s\t%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-)
-logging.getLogger().addHandler(console_handler)
 
 
 # ---------------------------------------------------------------
@@ -228,8 +218,8 @@ def create_download_link(text_input, response, selected_model, time_processed):
 
 
 def log_event(
-    text,
-    response,
+    len_text,
+    len_response,
     zix_input,
     zix_output,
     simplification_level,
@@ -241,18 +231,18 @@ def log_event(
     Log a text simplification event with relevant metrics.
 
     Args:
-        text : str
-            The original input text to be simplified.
-        response : str
-            The simplified output text.
+        len_text : str
+            The word count of the original input text.
+        len_response : str
+            The word count of the simplified output text.
         zix_input : float
-            Complexity index score for the input text.
+            Understandability score for the input text.
         zix_output : float
-            Complexity index score for the output text.
+            Understandability score for the output text.
         simplification_level : str
-            The requested level of simplification (e.g., 'easy', 'medium', 'hard').
+            The requested level of simplification.
         selected_model : str
-            The name or identifier of the model used for simplification.
+            The model name used for simplification.
         time_processed : float
             The processing time in seconds required to generate the simplified text.
         success : bool
@@ -264,8 +254,8 @@ def log_event(
 
     """
     log_string = f"{datetime.now().strftime(DATETIME_FORMAT)}"
-    log_string += f"\t{len(text.split())}"  # Number of words in the input text.
-    log_string += f"\t{len(response.split())}"  # Number of words in the output text.
+    log_string += f"\t{len_text}"
+    log_string += f"\t{len_response}"
     log_string += f"\t{zix_input}"
     log_string += f"\t{zix_output}"
     log_string += f"\t{simplification_level}"
@@ -275,10 +265,10 @@ def log_event(
 
     logging.info(log_string)
 
-    # Also track metrics for Prometheus
+    # Track metrics for Prometheus
     track_metrics(
-        len(text),
-        len(response),
+        len_text,
+        len_response,
         zix_input,
         zix_output,
         simplification_level,
@@ -308,7 +298,6 @@ with st.sidebar:
         help="Wähle das Sprachmodell (LLM), das für die Vereinfachung verwendet werden soll. Phi-4 KTZH ist das Standardmodell und von uns für die Anwendung im Kanton optimiert. Gemma-3 ist ein gutes allgemeines Modell, das auch gute Ergebnisse liefert.",
     )
 
-# Set up first row with buttons and settings.
 button_cols = st.columns([2, 4])
 
 with button_cols[0]:
@@ -361,7 +350,6 @@ else:
     score_source_rounded = int(np.round(score_source, 0) + 0)
     cefr_source = get_cefr(score_source)
 
-    # Analyze source text and display results.
     if score_source < LIMIT_HARD:
         st.markdown(
             f"Dein Ausgangstext ist **:red[schwer verständlich]** und entspricht etwa dem **:red[Sprachniveau {cefr_source}]**."
@@ -403,13 +391,13 @@ if do_simplification:
             f"Es ist ein Fehler bei der Abfrage aufgetreten: {error_message}. Bitte versuche es erneut."
         )
         time_processed = time.time() - start_time
-        error_message_cleaned_for_log = error_message.replace("\t", " ")
-        error_message_cleaned_for_log = error_message_cleaned_for_log.replace("\n", " ")
-        error_message_cleaned_for_log = error_message_cleaned_for_log.replace('"', "")
+        error_message_cleaned_for_log = (
+            error_message.replace("\t", " ").replace("\n", " ").replace('"', "")
+        )
         log_event(
-            source_text,
+            len(source_text.split()),
             f"Error from model call. {error_message_cleaned_for_log}",
-            None,
+            score_source,
             None,
             simplification_level,
             selected_model,
@@ -439,8 +427,7 @@ if do_simplification:
             st.error(f"Fehler beim Streamen des Textes: {str(e)}")
             break
 
-    # Check if we have content to analyze
-    if response.strip():
+    if response != "":
         score_target = get_zix(response)
         score_target_rounded = int(np.round(score_target, 0) + 0)
         cefr_target = get_cefr(score_target)
@@ -464,8 +451,8 @@ if do_simplification:
     st.caption(f"Verarbeitet in {time_processed:.1f} Sekunden.")
 
     log_event(
-        st.session_state.key_textinput,
-        response,
+        len(source_text.split()),
+        len(response.split()),
         np.round(score_source, 2),
         np.round(score_target, 2),
         simplification_level,
