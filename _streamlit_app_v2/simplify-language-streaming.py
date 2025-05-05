@@ -45,13 +45,13 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DEFAULT_SYSTEM_MESSAGE = SYSTEM_MESSAGE_VS
 
 MODEL_OPTIONS = {
-    "Phi-4 KTZH": "gpt-4.1-nano",
-    "Gemma 3": "gpt-4o",
+    "Phi-4 KTZH": "hf.co/matterhorn/Phi-4_KTZH_250422_v1",
+    "Gemma 3": "hf.co/google/gemma-3-27b-it-qat-q4_0-gguf",
 }
 
 # Model-specific temperature settings
 MODEL_TEMPERATURES = {
-    "Gemma 3": 0.5,
+    "Gemma 3": 1.0,
     "Phi-4 KTZH": 0.5,
 }
 
