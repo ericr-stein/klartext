@@ -41,8 +41,8 @@ OPENAI_TEMPLATES = [
 
 # Constants
 MODEL_OPTIONS = {
-    "Gemma 3": "https://sp000201-t5.kt.ktzh.ch",
-    "Phi-4": "https://sp000201-t6.kt.ktzh.ch",
+    "Gemma 3": "http://llama-cpp-gpu0:8080",
+    "Phi-4": "http://llama-cpp-gpu1:8080",
 }
 
 # # Model-specific temperature settings
@@ -204,8 +204,7 @@ def call_llm(
             f"{model_name}/completion",
             headers=headers,
             json=payload,
-            timeout=timeout_value,
-            verify=False  # Accept self-signed certificates
+            timeout=timeout_value
         )
         response.raise_for_status()
 
