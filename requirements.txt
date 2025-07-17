@@ -8,5 +8,6 @@ openai
 tiktoken
 streamlit
 streamlit-extras
+requests
 
-prometheus-client # <--- ADD THIS LINE
+prometheus-client

@@ -5,8 +5,8 @@ import io
 import logging
 import numpy as np
 import os
+import requests
 from datetime import datetime
-from openai import OpenAI
 
 from docx import Document
 from docx.shared import Pt, Inches
@@ -41,13 +41,9 @@ OPENAI_TEMPLATES = [
 
 # Constants
 MODEL_OPTIONS = {
-    "Gemma 3": "hf.co/unsloth/gemma-3-27b-it-GGUF:Q6_K",
-    "Gemma 2": "gemma2:27b-instruct-q5_K_M",
-    "Phi-4 (vLLM)": "microsoft/phi-4", # Added vLLM option
-    "Llama Nemotron": "nemotron:70b-instruct-q5_K_M",
-    "Llama 3.3": "hf.co/unsloth/Llama-3.3-70B-Instruct-GGUF:Q5_K_M",
+    "Gemma 3": "https://sp000201-t5.kt.ktzh.ch",
+    "Phi-4": "https://sp000201-t6.kt.ktzh.ch",
 }
-DEFAULT_MODEL_IDENTIFIER = "microsoft/phi-4" # Define default model by identifier
 
 # # Model-specific temperature settings
 # MODEL_TEMPERATURES = {
@@ -58,10 +54,7 @@ DEFAULT_MODEL_IDENTIFIER = "microsoft/phi-4" # Define default model by identifie
 TEMPERATURE = 0.2
 
 # MODEL_NAME is now assigned dynamically based on user selection (see below)
-
-# Get Ollama host from environment variable or use default
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
-MAX_TOKENS = 2048
+MAX_TOKENS = 4096
 
 # Height of the text areas for input and output.
 TEXT_AREA_HEIGHT = 600
@@ -94,33 +87,6 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 # Functions
 
 
-@st.cache_resource
-def get_llm_client(model_name):
-    """Create a connection to the LLM API (Ollama or vLLM) using OpenAI SDK.
-
-    Args:
-        model_name (str): The identifier of the model being used.
-
-    Returns:
-        OpenAI: Configured OpenAI client.
-    """
-    try:
-        if model_name == "microsoft/phi-4":
-            # Use vLLM endpoint
-            base_url = f"{os.environ.get('VLLM_HOST', 'http://vllm:8000')}/v1"
-            api_key = "nokey" # vLLM might not need an API key
-        else:
-            # Use Ollama endpoint
-            base_url = f"{os.environ.get('OLLAMA_HOST', 'http://ollama:11434')}/v1"
-            api_key = "ollama" # Required by OpenAI SDK for Ollama
-
-        return OpenAI(
-            base_url=base_url,
-            api_key=api_key,
-        )
-    except Exception as e:
-        st.error(f"Verbindung zum LLM Server fehlgeschlagen: {str(e)}")
-        raise
 
 
 @st.cache_resource
@@ -210,53 +176,55 @@ def create_prompt(
 
 def call_llm(
     text,
-    model_name=MODEL_NAME,
+    model_name,
     analysis=False,
 ):
-    """Call Ollama API using OpenAI SDK for text generation."""
+    """Call llama.cpp API using requests for text generation."""
     text = text.strip()
     final_prompt, system = create_prompt(text, *OPENAI_TEMPLATES, analysis)
+    
+    # Combine system and user prompt for llama.cpp
+    full_prompt = f"{system}\n\n{final_prompt}"
 
     try:
-        client = get_llm_client(model_name) # Pass model_name to get correct client
+        headers = {
+            "Content-Type": "application/json",
+        }
+        
+        payload = {
+            "prompt": full_prompt,
+            "n_predict": MAX_TOKENS,
+            "temperature": TEMPERATURE,
+        }
 
-        # # Get the display name of the model
-        # model_display_name = next(
-        #     (k for k, v in MODEL_OPTIONS.items() if v == model_name), None
-        # )
-
-        # # Determine temperature based on model
-        # temp = MODEL_TEMPERATURES.get(model_display_name, MODEL_TEMPERATURES["default"])
-
-        # Set timeout value
         timeout_value = 180 if analysis else 60
 
-        # Make the API call using OpenAI SDK
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": final_prompt},
-            ],
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
+        # The URL is the model_name
+        response = requests.post(
+            f"{model_name}/completion",
+            headers=headers,
+            json=payload,
             timeout=timeout_value,
+            verify=False  # Accept self-signed certificates
         )
+        response.raise_for_status()
 
         # Extract the response message
-        message = response.choices[0].message.content
-        # message = get_result_from_response(message)
+        message = response.json().get("content", "")
         message = strip_markdown(message)
 
         return True, message
 
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
-        if "timeout" in str(e).lower():
+        if isinstance(e, requests.exceptions.Timeout):
             return (
                 False,
                 f"Zeitüberschreitung: Die Anfrage dauerte länger als {timeout_value} Sekunden.",
             )
+        return False, str(e)
+    except Exception as e:
+        print(f"Error: {e}")
         return False, str(e)
 
 
@@ -435,28 +403,15 @@ with button_cols[2]:
 
 with button_cols[3]:
     # Model selection
-    # Find the key (display name) and index for the default model identifier
-    model_keys = list(MODEL_OPTIONS.keys())
-    default_model_key = None
-    default_index = 0 # Default to first model if not found
-    for i, key in enumerate(model_keys):
-        if MODEL_OPTIONS[key] == DEFAULT_MODEL_IDENTIFIER:
-            default_model_key = key
-            default_index = i
-            break
-
-    if default_model_key is None:
-         st.warning(f"Default model identifier '{DEFAULT_MODEL_IDENTIFIER}' not found in MODEL_OPTIONS values. Falling back to the first model.")
-         # default_index is already 0
-
     # Model selection
+    model_keys = list(MODEL_OPTIONS.keys())
     selected_model_key = st.radio(
         "Modell:",
-        options=model_keys, # Use the calculated keys
-        index=default_index, # Use the calculated index
-        help="Wähle das Modell, das für die Vereinfachung verwendet werden soll. Jedes Modell schreibt unterschiedlich. Alle Modelle sind von uns getestet und einen Versuch wert.",
+        options=model_keys,
+        index=0, # Default to the first one
+        help="Wähle das Modell, das für die Vereinfachung verwendet werden soll."
     )
-    # Get the actual model name for API calls
+    # Get the actual URL for API calls
     MODEL_NAME = MODEL_OPTIONS[selected_model_key]
     # Store friendly name for display/logging
     model_choice = selected_model_key

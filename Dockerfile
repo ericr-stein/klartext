@@ -17,14 +17,12 @@ RUN python -m spacy download de_core_news_sm
 
 # Copy application code
 COPY _streamlit_app/ /app/_streamlit_app/
-COPY utils_prompts_evals.py /app/
 
 # Create log directory
 RUN mkdir -p /app/logs
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV OLLAMA_HOST=http://ollama:11434
 
 # Expose Streamlit port
 EXPOSE 8501
