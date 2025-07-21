@@ -9,3 +9,4 @@ tiktoken
 streamlit
 streamlit-extras
 prometheus-client
+python-dotenv
