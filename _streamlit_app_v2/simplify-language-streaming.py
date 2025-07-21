@@ -108,7 +108,9 @@ def get_llm_clients():
                     api_key="not-needed",  # API key is not required for Llama.cpp
                 )
             except Exception as e:
-                st.error(f"Verbindung zum KI-Server für {model_name} fehlgeschlagen: {e}")
+                st.error(
+                    f"Verbindung zum KI-Server für {model_name} fehlgeschlagen: {e}"
+                )
                 clients[model_name] = None
         else:
             st.warning(f"URL für Modell {model_name} ist nicht konfiguriert.")
@@ -421,8 +423,11 @@ if do_simplification:
         try:
             chunk = next(stream)
             if chunk.choices[0].delta.content is not None:
+                chunk_text = chunk.choices[0].delta.content
                 # Often the models return the German letter ß. Replace it with the Swiss German equivalent ss.
-                response += chunk.choices[0].delta.content.replace("ß", "ss")
+                # Also remove markdown formatting **bold**.
+                chunk_text = chunk_text.replace("ß", "ss").replace("**", "")
+                response += chunk_text
                 placeholder.text_area(
                     "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
                 )
