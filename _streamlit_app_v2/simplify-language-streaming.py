@@ -38,25 +38,29 @@ logging.basicConfig(
 # ---------------------------------------------------------------
 # Constants
 
-load_dotenv()
+# load_dotenv("/root/.env_stat")
+load_dotenv("/Volumes/1TB Home SSD/GitHub/.env_stat")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 DEFAULT_SYSTEM_MESSAGE = SYSTEM_MESSAGE_VS
 
 MODEL_OPTIONS = {
-    "Phi-4": os.environ.get("LLAMACPP_GPU1_URL"),
-    "Gemma 3": os.environ.get("LLAMACPP_GPU0_URL"),
+    "Phi-4 KTZH": "hf.co/matterhorn/Phi-4_KTZH_250422_v1",
+    "Gemma 3": "hf.co/google/gemma-3-27b-it-qat-q4_0-gguf",
 }
 
 # Model-specific temperature settings
 MODEL_TEMPERATURES = {
     "Gemma 3": 1.0,
-    "Phi-4": 0.5,
+    "Phi-4 KTZH": 0.5,
 }
 
-DEFAULT_MODEL = "Phi-4"
+DEFAULT_MODEL = "Phi-4 KTZH"
 DEFAULT_TEMPERATURE = 0.5
 
 
+# Get Ollama host from environment variable or use default
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 MAX_TOKENS = 2048
 
 # Height of the text areas for input and output.
@@ -92,23 +96,21 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 @st.cache_resource
-def get_llamacpp_client(base_url):
-    """Create a connection to the llama.cpp API using OpenAI SDK.
+def get_ollama_client(base_url=OLLAMA_HOST):
+    """Create a connection to the Ollama API using OpenAI SDK.
 
     Args:
-        base_url (str): URL of the llama.cpp service.
+        base_url (str): URL of the Ollama service.
 
     Returns:
-        OpenAI: Configured OpenAI client for llama.cpp.
+        OpenAI: Configured OpenAI client for Ollama.
     """
-    if not base_url:
-        st.error("Die URL für das ausgewählte Modell ist nicht konfiguriert.")
-        return None
     try:
-        return OpenAI(
-            base_url=f"{base_url}/v1",
-            api_key="sk-no-key-required",
+        client = OpenAI(
+            # base_url=f"{base_url}/v1",
+            api_key=OPENAI_API_KEY,
         )
+        return client
     except Exception as e:
         st.error(f"Verbindung zum AFI KI-Server fehlgeschlagen: {str(e)}")
         return None
@@ -133,15 +135,16 @@ def call_llm(
     model_name=DEFAULT_MODEL,
     system_message=DEFAULT_SYSTEM_MESSAGE,
 ):
-    """Call llama.cpp API using OpenAI SDK for text generation."""
+    """Call Ollama API using OpenAI SDK for text generation."""
     if not client:
         return False, "Verbindung zum KI-Server nicht verfügbar."
 
     temperature = MODEL_TEMPERATURES.get(model_name, DEFAULT_TEMPERATURE)
+    model_id = MODEL_OPTIONS.get(model_name)
 
     try:
         stream = client.chat.completions.create(
-            model="local-model",  # llama.cpp uses this as a placeholder
+            model=model_id,
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": text.strip()},
@@ -202,6 +205,10 @@ def create_download_link(text_input, response, selected_model, time_processed):
     io_stream = io.BytesIO()
     document.save(io_stream)
 
+    # # A download button resets the app. So we use a link instead.
+    # https://github.com/streamlit/streamlit/issues/4382#issuecomment-1223924851
+    # https://discuss.streamlit.io/t/creating-a-pdf-file-generator/7613?u=volodymyr_holomb
+
     b64 = base64.b64encode(io_stream.getvalue())
     file_name = DEFAULT_OUTPUT_FILENAME
     caption = "Vereinfachten Text herunterladen"
@@ -222,6 +229,29 @@ def log_event(
 ):
     """
     Log a text simplification event with relevant metrics.
+
+    Args:
+        len_text : str
+            The word count of the original input text.
+        len_response : str
+            The word count of the simplified output text.
+        zix_input : float
+            Understandability score for the input text.
+        zix_output : float
+            Understandability score for the output text.
+        simplification_level : str
+            The requested level of simplification.
+        selected_model : str
+            The model name used for simplification.
+        time_processed : float
+            The processing time in seconds required to generate the simplified text.
+        success : bool
+            Whether the simplification operation was successful.
+
+    Returns:
+        None
+            The function logs the information to the configured logging system.
+
     """
     log_string = f"{datetime.now().strftime(DATETIME_FORMAT)}"
     log_string += f"\t{len_text}"
@@ -251,6 +281,7 @@ def log_event(
 # ---------------------------------------------------------------
 # Main App
 
+ollama_client = get_ollama_client()
 project_info = get_project_info()
 
 with st.sidebar:
@@ -264,17 +295,20 @@ with st.sidebar:
         "Sprachmodell:",
         options=list(MODEL_OPTIONS.keys()),
         index=0,
-        help="Wähle das Sprachmodell (LLM), das für die Vereinfachung verwendet werden soll. Phi-4 ist das Standardmodell und von uns für die Anwendung im Kanton optimiert. Gemma-3 ist ein gutes allgemeines Modell, das auch gute Ergebnisse liefert.",
+        help="Wähle das Sprachmodell (LLM), das für die Vereinfachung verwendet werden soll. Phi-4 KTZH ist das Standardmodell und von uns für die Anwendung im Kanton optimiert. Gemma-3 ist ein gutes allgemeines Modell, das auch gute Ergebnisse liefert.",
     )
 
 button_cols = st.columns([2, 4])
 
 with button_cols[0]:
+    # Disable button if client connection failed
+    simplify_disabled = ollama_client is None
     do_simplification = st.button(
         "Vereinfachen",
         use_container_width=True,
         help="Vereinfacht deinen Ausgangstext.",
         type="primary",
+        disabled=simplify_disabled,
     )
 
 with button_cols[1]:
@@ -342,9 +376,8 @@ if do_simplification:
     start_time = time.time()
 
     with st.spinner("Text wird verarbeitet..."):
-        client = get_llamacpp_client(MODEL_OPTIONS[selected_model])
         success, stream = call_llm(
-            client=client,
+            client=ollama_client,
             text=source_text,
             model_name=selected_model,
             system_message=system_message,
