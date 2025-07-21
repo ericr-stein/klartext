@@ -427,6 +427,10 @@ if do_simplification:
                 # Often the models return the German letter ß. Replace it with the Swiss German equivalent ss.
                 # Also remove markdown formatting **bold**.
                 chunk_text = chunk_text.replace("ß", "ss").replace("**", "")
+
+                if chunk_text.strip() == "":
+                    continue
+
                 response += chunk_text
                 placeholder.text_area(
                     "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
