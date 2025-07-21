@@ -20,6 +20,7 @@ from docx import Document
 from docx.shared import Pt, Inches
 from zix.understandability import get_zix, get_cefr
 from metrics import track_metrics
+import re
 from utils_prompts import (
     SYSTEM_MESSAGE_VS,
     SYSTEM_MESSAGE_ES,
@@ -425,12 +426,12 @@ if do_simplification:
             if chunk.choices[0].delta.content is not None:
                 chunk_text = chunk.choices[0].delta.content
                 # Often the models return the German letter ß. Replace it with the Swiss German equivalent ss.
-                # Also remove markdown formatting **bold**.
-                chunk_text = chunk_text.replace("ß", "ss").replace("**", "")
-
-                if chunk_text.strip() == "":
+                # Also remove markdown formatting **bold** and # headings.
+                chunk_text = chunk_text.replace("ß", "ss")
+                chunk_text = re.sub(r"\*\*", " ", chunk_text)
+                chunk_text = re.sub(r"^#{1,4}\s+", "", chunk_text, flags=re.MULTILINE)
+                if chunk_text == "":
                     continue
-
                 response += chunk_text
                 placeholder.text_area(
                     "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
