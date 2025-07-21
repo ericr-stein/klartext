@@ -38,29 +38,30 @@ logging.basicConfig(
 # ---------------------------------------------------------------
 # Constants
 
-# load_dotenv("/root/.env_stat")
-load_dotenv("/Volumes/1TB Home SSD/GitHub/.env_stat")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Use a .env file to manage environment variables
+load_dotenv()
+
+# Get Llama.cpp server URLs from environment variables
+LLAMACPP_GPU0_URL = os.getenv("LLAMACPP_GPU0_URL")
+LLAMACPP_GPU1_URL = os.getenv("LLAMACPP_GPU1_URL")
 
 DEFAULT_SYSTEM_MESSAGE = SYSTEM_MESSAGE_VS
 
-MODEL_OPTIONS = {
-    "Phi-4 KTZH": "hf.co/matterhorn/Phi-4_KTZH_250422_v1",
-    "Gemma 3": "hf.co/google/gemma-3-27b-it-qat-q4_0-gguf",
+MODEL_MAPPING = {
+    "Gemma 3": LLAMACPP_GPU0_URL,
+    "Phi 4": LLAMACPP_GPU1_URL,
 }
+MODEL_OPTIONS = list(MODEL_MAPPING.keys())
+
 
 # Model-specific temperature settings
 MODEL_TEMPERATURES = {
     "Gemma 3": 1.0,
-    "Phi-4 KTZH": 0.5,
+    "Phi 4": 0.5,
 }
 
-DEFAULT_MODEL = "Phi-4 KTZH"
+DEFAULT_MODEL = "Phi 4"
 DEFAULT_TEMPERATURE = 0.5
-
-
-# Get Ollama host from environment variable or use default
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 MAX_TOKENS = 2048
 
 # Height of the text areas for input and output.
@@ -96,24 +97,23 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 @st.cache_resource
-def get_ollama_client(base_url=OLLAMA_HOST):
-    """Create a connection to the Ollama API using OpenAI SDK.
-
-    Args:
-        base_url (str): URL of the Ollama service.
-
-    Returns:
-        OpenAI: Configured OpenAI client for Ollama.
-    """
-    try:
-        client = OpenAI(
-            # base_url=f"{base_url}/v1",
-            api_key=OPENAI_API_KEY,
-        )
-        return client
-    except Exception as e:
-        st.error(f"Verbindung zum AFI KI-Server fehlgeschlagen: {str(e)}")
-        return None
+def get_llm_clients():
+    """Create connections to the Llama.cpp servers."""
+    clients = {}
+    for model_name, base_url in MODEL_MAPPING.items():
+        if base_url:
+            try:
+                clients[model_name] = OpenAI(
+                    base_url=f"{base_url}/v1",
+                    api_key="not-needed",  # API key is not required for Llama.cpp
+                )
+            except Exception as e:
+                st.error(f"Verbindung zum KI-Server für {model_name} fehlgeschlagen: {e}")
+                clients[model_name] = None
+        else:
+            st.warning(f"URL für Modell {model_name} ist nicht konfiguriert.")
+            clients[model_name] = None
+    return clients
 
 
 @st.cache_resource
@@ -130,17 +130,22 @@ def create_project_info(project_info):
 
 
 def call_llm(
-    client,
+    clients,
     text,
     model_name=DEFAULT_MODEL,
     system_message=DEFAULT_SYSTEM_MESSAGE,
 ):
-    """Call Ollama API using OpenAI SDK for text generation."""
+    """Call a Llama.cpp server API using OpenAI SDK for text generation."""
+    client = clients.get(model_name)
     if not client:
-        return False, "Verbindung zum KI-Server nicht verfügbar."
+        return False, f"Verbindung zum KI-Server für {model_name} nicht verfügbar."
 
     temperature = MODEL_TEMPERATURES.get(model_name, DEFAULT_TEMPERATURE)
-    model_id = MODEL_OPTIONS.get(model_name)
+
+    # For Llama.cpp's OpenAI compatible endpoint, the model name in the request
+    # is often ignored as the server is loaded with a single model.
+    # We pass a dummy value like "local-model".
+    model_id = "local-model"
 
     try:
         stream = client.chat.completions.create(
@@ -281,7 +286,7 @@ def log_event(
 # ---------------------------------------------------------------
 # Main App
 
-ollama_client = get_ollama_client()
+clients = get_llm_clients()
 project_info = get_project_info()
 
 with st.sidebar:
@@ -293,16 +298,16 @@ with st.sidebar:
         create_project_info(project_info)
     selected_model = st.radio(
         "Sprachmodell:",
-        options=list(MODEL_OPTIONS.keys()),
-        index=0,
-        help="Wähle das Sprachmodell (LLM), das für die Vereinfachung verwendet werden soll. Phi-4 KTZH ist das Standardmodell und von uns für die Anwendung im Kanton optimiert. Gemma-3 ist ein gutes allgemeines Modell, das auch gute Ergebnisse liefert.",
+        options=MODEL_OPTIONS,
+        index=MODEL_OPTIONS.index(DEFAULT_MODEL),
+        help="Wähle das Sprachmodell (LLM), das für die Vereinfachung verwendet werden soll. Phi 4 ist das Standardmodell. Gemma 3 ist ein gutes allgemeines Modell, das auch gute Ergebnisse liefert.",
     )
 
 button_cols = st.columns([2, 4])
 
 with button_cols[0]:
-    # Disable button if client connection failed
-    simplify_disabled = ollama_client is None
+    # Disable button if client connection for the selected model failed
+    simplify_disabled = clients.get(selected_model) is None
     do_simplification = st.button(
         "Vereinfachen",
         use_container_width=True,
@@ -329,7 +334,7 @@ system_messages = {
 }
 
 system_message = system_messages[simplification_level]
-if selected_model == "Gemma 3":
+if "Gemma" in selected_model:
     system_message += ADDITION_GEMMA
 
 source_text = st.text_area(
@@ -377,7 +382,7 @@ if do_simplification:
 
     with st.spinner("Text wird verarbeitet..."):
         success, stream = call_llm(
-            client=ollama_client,
+            clients=clients,
             text=source_text,
             model_name=selected_model,
             system_message=system_message,

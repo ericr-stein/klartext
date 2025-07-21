@@ -4,10 +4,11 @@ services:
   simplify-app:
     build: .
     container_name: simplify-language
+    env_file:
+      - .env
     volumes:
       - ./logs:/app/logs
     environment:
-      - OLLAMA_HOST=http://ollama:11434
       - METRICS_PORT=8000
     labels:
       - "traefik.enable=true"
