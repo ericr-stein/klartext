@@ -19,3 +19,5 @@ _streamlit_app/_models/Llama-3.2-3B-Instruct-Q4_K_M.gguf
 _streamlit_app/simplify-language-local.py
 digest.txt
 .roomodes
+
+.env

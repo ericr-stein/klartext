@@ -6,8 +6,9 @@ services:
     container_name: simplify-language
     volumes:
       - ./logs:/app/logs
+    env_file:
+      - .env
     environment:
-      - OLLAMA_HOST=http://ollama:11434
       - METRICS_PORT=8000
     labels:
       - "traefik.enable=true"
@@ -21,6 +22,53 @@ services:
       - "traefik.http.services.metrics.loadbalancer.server.port=8000"
       - "traefik.http.routers.simplify.service=simplify"
       - "traefik.http.routers.metrics.service=metrics"
+    networks:
+      - traefik_network
+    restart: unless-stopped
+
+  llama-cpp-gpu0:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llama-cpp-gpu0
+    volumes:
+      - ./models:/models
+    environment:
+      - LLAMA_ARG_MODEL=/models/gemma3-27b-it-q4_0.gguf
+      - LLAMA_ARG_N_GPU_LAYERS=999
+    ports:
+      - "8080:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.llama-cpp-gpu0.rule=Host(`${LLAMACPP_GPU0_URL}`)"
+      - "traefik.http.routers.llama-cpp-gpu0.entrypoints=websecure"
+      - "traefik.http.routers.llama-cpp-gpu0.tls=true"
+      - "traefik.http.services.llama-cpp-gpu0.loadbalancer.server.port=8080"
+    networks:
+      - traefik_network
+    restart: unless-stopped
+  
+  llama-cpp-gpu1:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llama-cpp-gpu1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+    volumes:
+      - ./models:/models
+    environment:
+      - LLAMA_ARG_MODEL=/models/phi-4-ktzh/Phi-4_KTZH_250422_v1_Q8_0.gguf
+      - LLAMA_ARG_N_GPU_LAYERS=999
+    ports:
+      - "8081:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.llama-cpp-gpu1.rule=Host(`${LLAMACPP_GPU1_URL}`)"
+      - "traefik.http.routers.llama-cpp-gpu1.entrypoints=websecure"
+      - "traefik.http.routers.llama-cpp-gpu1.tls=true"
+      - "traefik.http.services.llama-cpp-gpu1.loadbalancer.server.port=8080"
     networks:
       - traefik_network
     restart: unless-stopped
