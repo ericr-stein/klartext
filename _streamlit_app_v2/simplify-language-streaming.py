@@ -62,6 +62,7 @@ MODEL_TEMPERATURES = {
 }
 
 DEFAULT_MODEL = "Phi 4"
+selected_model = DEFAULT_MODEL
 DEFAULT_TEMPERATURE = 0.5
 MAX_TOKENS = 2048
 
@@ -299,12 +300,12 @@ with st.sidebar:
     st.markdown(USER_WARNING, unsafe_allow_html=True)
     if st.button("Details zur App", use_container_width=True):
         create_project_info(project_info)
-    selected_model = st.radio(
-        "Sprachmodell:",
-        options=MODEL_OPTIONS,
-        index=MODEL_OPTIONS.index(DEFAULT_MODEL),
-        help="Wähle das Sprachmodell (LLM), das für die Vereinfachung verwendet werden soll. Phi 4 ist das Standardmodell. Gemma 3 ist ein gutes allgemeines Modell, das auch gute Ergebnisse liefert.",
-    )
+    # selected_model = st.radio(
+    #     "Sprachmodell:",
+    #     options=MODEL_OPTIONS,
+    #     index=MODEL_OPTIONS.index(DEFAULT_MODEL),
+    #     help="Wähle das Sprachmodell (LLM), das für die Vereinfachung verwendet werden soll. Phi 4 ist das Standardmodell. Gemma 3 ist ein gutes allgemeines Modell, das auch gute Ergebnisse liefert.",
+    # )
 
 button_cols = st.columns([2, 4])
 
