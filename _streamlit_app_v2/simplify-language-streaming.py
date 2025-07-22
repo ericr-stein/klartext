@@ -185,7 +185,7 @@ def create_download_link(text_input, response, selected_model, time_processed):
     footer = document.sections[0].footer
     footer.paragraphs[
         0
-    ].text = f"Erstellt am {timestamp} mit der KlartextZH-App » des Kantons Zürich.\nModell: {selected_model}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
+    ].text = f"Erstellt am {timestamp} mit der KlartextZH-App des Kantons Zürich.\nModell: {selected_model}\nVerarbeitungszeit: {time_processed:.1f} Sekunden"
 
     # Set font for all paragraphs.
     for paragraph in document.paragraphs:
@@ -338,8 +338,8 @@ system_messages = {
 }
 
 system_message = system_messages[simplification_level]
-if "Gemma" in selected_model:
-    system_message += ADDITION_GEMMA
+# if "Gemma" in selected_model:
+#     system_message += ADDITION_GEMMA
 
 source_text = st.text_area(
     "Ausgangstext, den du vereinfachen möchtest",
@@ -430,7 +430,7 @@ if do_simplification:
                 # Also remove markdown formatting **bold** and # headings.
                 chunk_text = chunk_text.replace("ß", "ss")
                 chunk_text = re.sub(r"\*\*", " ", chunk_text)
-                chunk_text = re.sub(r"^#{1,4}\s+", "", chunk_text, flags=re.MULTILINE)
+                chunk_text = re.sub(r"^#{1,6}", "", chunk_text, flags=re.MULTILINE)
                 if chunk_text == "":
                     continue
                 response += chunk_text
