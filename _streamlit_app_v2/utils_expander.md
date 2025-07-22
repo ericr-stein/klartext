@@ -23,14 +23,10 @@ Die App bietet dir drei verschiedene Grade der Vereinfachung:
 
 **Die Texte werden teils in guter Qualität vereinfacht. Sprachmodelle machen aber auch Fehler. Die App liefert lediglich einen Entwurf. Die Texte müssen immer von dir überprüft werden. Du bleibst für die Ergebnisse immer verantwortlich.**
 
-### Was sind die verschiedenen Sprachmodelle?
+### Welches Sprachmodell wird in der App verwendet?
 
-Momentan kannst du zwischen zwei Sprachmodellen wählen:
+Wir setzen das Open-Source-Sprachmodell [**Phi-4** von Microsoft](https://huggingface.co/microsoft/phi-4) ein. Das Modell können wir lokal betreiben und haben es zudem mit einem sog. Finetuning spezifisch auf unsere Sprachleitfäden optimiert.
 
-- **Phi-4 KTZH** von Microsoft: Ein leistungsfähiges und von uns für den Kanton optimiertes Sprachmodell.
-- **Gemma-3** von Google: Ein gutes allgemeines Sprachmodell.
-
-Beide Modelle schreiben unterschiedlich und sind beide einen Versuch wert. Phi-4 KTZH ist voreingestellt, da es nach unseren Tests rundum die besten Ergebnisse bringt.
 
 ### Wie funktioniert die Bewertung der Verständlichkeit?
 
@@ -42,5 +38,6 @@ Wir möchten das System kontinuierlich nach Nutzungsbedürfnissen verbessern. Wi
 
 ## Versionsverlauf
 
-- **v0.2** 5.05.2025 - *Verbesserte Prompts und Modelle. Einfachere Bedienung der App.*
-- **v0.1** 24.03.2025 - *Erste Version der App.*
+- **v1.0.0** 22.07.2025 - *Optimiertes Sprachmodell Phi-4 KTZH. Neues einfacheres UI. Ergebnisse werden gestreamt.*
+- **v0.2.0** 05.05.2025 - *Verbesserte Prompts und Modelle. Einfachere Bedienung der App.*
+- **v0.1.0** 24.03.2025 - *Erste Version der App.*
