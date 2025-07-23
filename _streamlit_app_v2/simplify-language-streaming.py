@@ -416,9 +416,6 @@ if do_simplification:
 
         st.stop()
 
-    # Display results in UI.
-    time_processed = time.time() - start_time
-
     placeholder = st.empty()
     response = ""
     while True:
@@ -470,7 +467,9 @@ if do_simplification:
         st.markdown(
             f"Dein vereinfachter Text ist **:green[gut verständlich]** und entspricht etwa dem **:green[Sprachniveau {cefr_target}]**."
         )
-
+        
+    time_processed = time.time() - start_time
+    
     create_download_link(
         st.session_state.key_textinput, response, selected_model, time_processed
     )
