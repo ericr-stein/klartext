@@ -418,37 +418,38 @@ if do_simplification:
 
     placeholder = st.empty()
     response = ""
-    while True:
-        try:
-            chunk = next(stream)
-            if chunk.choices[0].delta.content is not None:
-                chunk_text = chunk.choices[0].delta.content
-                # Often the models return the German letter ß. Replace it with the Swiss German equivalent ss.
-                # Also remove markdown formatting **bold** and # headings.
-                chunk_text = chunk_text.replace("ß", "ss")
-                chunk_text = re.sub(r"\*\*", " ", chunk_text)
-                chunk_text = re.sub(r"^#{1,7}", "", chunk_text, flags=re.MULTILINE)
-                if chunk_text == "":
-                    continue
-                response += chunk_text
+    with st.spinner("Ich vereinfache deinen Text..."):
+        while True:
+            try:
+                chunk = next(stream)
+                if chunk.choices[0].delta.content is not None:
+                    chunk_text = chunk.choices[0].delta.content
+                    # Often the models return the German letter ß. Replace it with the Swiss German equivalent ss.
+                    # Also remove markdown formatting **bold** and # headings.
+                    chunk_text = chunk_text.replace("ß", "ss")
+                    chunk_text = re.sub(r"\*\*", " ", chunk_text)
+                    chunk_text = re.sub(r"^#{1,7}", "", chunk_text, flags=re.MULTILINE)
+                    if chunk_text == "":
+                        continue
+                    response += chunk_text
+                    placeholder.text_area(
+                        "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
+                    )
+            except StopIteration:
+                # Finally, remove leading spaces from each line in the response. We cannot remove these during streaming, since the trailing space is not included in the chunk with the markdown markup but in the next chunk.
+                response_lines = response.split("\n")
+                response = "\n".join(
+                    line[1:] if line.startswith(" ") and not line.startswith("  ") else line for line in response_lines
+                )
+                # Add a final newline to the end of the response to avoid Streamlit errors with duplicates widget keys.
+                response = response + "\n"
                 placeholder.text_area(
                     "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
                 )
-        except StopIteration:
-            # Finally, remove leading spaces from each line in the response. We cannot remove these during streaming, since the trailing space is not included in the chunk with the markdown markup but in the next chunk.
-            response_lines = response.split("\n")
-            response = "\n".join(
-                line[1:] if line.startswith(" ") and not line.startswith("  ") else line for line in response_lines
-            )
-            # Add a final newline to the end of the response to avoid Streamlit errors with duplicates widget keys.
-            response = response + "\n"
-            placeholder.text_area(
-                "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
-            )
-            break
-        except Exception as e:
-            st.error(f"Fehler beim Streamen des Textes: {str(e)}")
-            break
+                break
+            except Exception as e:
+                st.error(f"Fehler beim Streamen des Textes: {str(e)}")
+                break
 
     if response != "":
         score_target = get_zix(response)
@@ -469,7 +470,7 @@ if do_simplification:
         )
         
     time_processed = time.time() - start_time
-    
+
     create_download_link(
         st.session_state.key_textinput, response, selected_model, time_processed
     )
