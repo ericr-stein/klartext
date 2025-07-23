@@ -430,7 +430,7 @@ if do_simplification:
                 # Also remove markdown formatting **bold** and # headings.
                 chunk_text = chunk_text.replace("ß", "ss")
                 chunk_text = re.sub(r"\*\*", " ", chunk_text)
-                chunk_text = re.sub(r"^#{1,6}", "", chunk_text, flags=re.MULTILINE)
+                chunk_text = re.sub(r"^#{1,7}", "", chunk_text, flags=re.MULTILINE)
                 if chunk_text == "":
                     continue
                 response += chunk_text
@@ -438,6 +438,14 @@ if do_simplification:
                     "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
                 )
         except StopIteration:
+            # Finally, remove leading spaces from each line in the response. We cannot remove these during streaming, since it is not included in the chunk with the markdown markup but in the next chunk.
+            response_lines = response.split("\n")
+            response = "\n".join(
+                line[1:] if line.startswith(" ") else line for line in response_lines
+            )
+            placeholder.text_area(
+                "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
+            )
             break
         except Exception as e:
             st.error(f"Fehler beim Streamen des Textes: {str(e)}")
