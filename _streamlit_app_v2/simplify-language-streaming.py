@@ -438,11 +438,13 @@ if do_simplification:
                     "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
                 )
         except StopIteration:
-            # Finally, remove leading spaces from each line in the response. We cannot remove these during streaming, since it is not included in the chunk with the markdown markup but in the next chunk.
+            # Finally, remove leading spaces from each line in the response. We cannot remove these during streaming, since the trailing space is not included in the chunk with the markdown markup but in the next chunk.
             response_lines = response.split("\n")
             response = "\n".join(
-                line[1:] if line.startswith(" ") else line for line in response_lines
+                line[1:] if line.startswith(" ") and not line.startswith("  ") else line for line in response_lines
             )
+            # Add a final newline to the end of the response to avoid Streamlit errors with duplicates widget keys.
+            response = response + "\n"
             placeholder.text_area(
                 "Dein vereinfachter Text", value=response, height=TEXT_AREA_HEIGHT
             )
